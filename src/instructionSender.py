@@ -1,74 +1,74 @@
 import time
 
-class InstructionSender:
+# Store device references globally (set by init_sender)
+_main = None
+_stepper = None
+_spectrum = None
+_peo = None
+
+def init_sender(main, stepper, spectrum=None, peo=None):
     """
-    Handles parsing and sending instructions to peripheral devices.
+    Initialize global device references for instruction sending.
     """
+    global _main, _stepper, _spectrum, _peo
+    _main = main
+    _stepper = stepper
+    _spectrum = spectrum
+    _peo = peo
 
-    def __init__(self, main, stepper, spectrum=None, peo=None):
-        """
-        Initialize with communication objects.
-        """
-        self.main = main
-        self.stepper = stepper
-        self.spectrum = spectrum
-        self.peo = peo
+def send_instruction(instruction, line=0):
+    """
+    Parses and sends a single instruction to the appropriate device.
+    """
+    instruction = instruction.strip()
+    if not instruction or instruction.startswith('#'):
+        return  # Ignore empty lines and comments
 
-    def send_instruction(self, instruction, line=0):
-        """
-        Parses and sends a single instruction to the appropriate device.
-        """
-        instruction = instruction.strip()
-        if not instruction or instruction.startswith('#'):
-            return  # Ignore empty lines and comments
+    try:
+        if instruction.startswith('PUMP1'):
+            _, delay = instruction.split(' ')
+            _main.sendInstruction('a' + delay)
 
-        try:
-            if instruction.startswith('PUMP1'):
-                _, delay = instruction.split(' ')
-                self.main.sendInstruction('a' + delay)
+        elif instruction.startswith('PUMP2'):
+            _, delay = instruction.split(' ')
+            _main.sendInstruction('b' + delay)
 
-            elif instruction.startswith('PUMP2'):
-                _, delay = instruction.split(' ')
-                self.main.sendInstruction('b' + delay)
+        elif instruction.startswith('PUMP3'):
+            _, delay = instruction.split(' ')
+            _main.sendInstruction('c' + delay)
 
-            elif instruction.startswith('PUMP3'):
-                _, delay = instruction.split(' ')
-                self.main.sendInstruction('c' + delay)
+        elif instruction.startswith('PUMP4'):
+            _, delay = instruction.split(' ')
+            _main.sendInstruction('d' + delay)
 
-            elif instruction.startswith('PUMP4'):
-                _, delay = instruction.split(' ')
-                self.main.sendInstruction('d' + delay)
+        elif instruction.startswith('SOLENOID'):
+            _, delay = instruction.split(' ')
+            _main.sendInstruction('c' + delay)
 
-            elif instruction.startswith('SOLENOID'):
-                _, delay = instruction.split(' ')
-                self.main.sendInstruction('c' + delay)
+        elif instruction.startswith('FAN'):
+            _, delay = instruction.split(' ')
+            _main.sendInstruction('f' + delay)
 
-            elif instruction.startswith('FAN'):
-                _, delay = instruction.split(' ')
-                self.main.sendInstruction('f' + delay)
+        elif instruction.startswith('WIRE CUT'):
+            _main.sendInstruction('g000')
 
-            elif instruction.startswith('WIRE CUT'):
-                self.main.sendInstruction('g000')
+        elif instruction.startswith(('G1', 'G21', 'G90', 'M30', 'F')):
+            _stepper.sendInstruction(instruction)
 
-            elif instruction.startswith(('G1', 'G21', 'G90', 'M30', 'F')):
-                self.stepper.sendInstruction(instruction)
+        elif instruction.startswith('PAUSE'):
+            _, delay = instruction.split(' ')
+            time.sleep(int(delay))
 
-            elif instruction.startswith('PAUSE'):
-                _, delay = instruction.split(' ')
-                time.sleep(int(delay))
+        elif instruction.startswith('SPECTRUM GET'):
+            if _spectrum:
+                _spectrum.getSpectrum()
 
-            elif instruction.startswith('SPECTRUM GET'):
-                if self.spectrum:
-                    self.spectrum.getSpectrum()
-                # else: pass
+        elif instruction.startswith('PEO'):
+            if _peo:
+                _peo.sendInstruction(instruction)
 
-            elif instruction.startswith('PEO'):
-                if self.peo:
-                    self.peo.sendInstruction(instruction)
-                # else: pass
+        else:
+            print(f'{instruction} not recognised at line:{line}')
 
-            else:
-                print(f'{instruction} not recognised at line:{line}')
-
-        except Exception as e:
-            print(f"Error processing instruction at line {line}: {instruction}\n{e}")
+    except Exception as e:
+        print(f"Error processing instruction at line {line}: {instruction}\n{e}")

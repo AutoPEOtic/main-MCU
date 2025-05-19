@@ -25,3 +25,13 @@ PEO_Pause1 = 100
 PEO_Pulseneg = 100
 PEO_Pause2 = 100
 PEO_Multiplier = 3
+
+# [database]
+database_host = "localhost"
+database_user = "AutoPEOtic"
+database_password = "admin123"
+database_name = "AutoPEOtic_db"
+database_port = 3306
+# database_table = "measurements"
+# database_columns = ["Voltage", "KOH_concentration", "Spectrum"]
+# database_values = [0, 0, "spectrum_data"]  # Example values
