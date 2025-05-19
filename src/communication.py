@@ -12,7 +12,7 @@ class communication:
         self.baudrate = baudrate
         self.serial = serial.Serial(self.port, self.baudrate, timeout=1)
 
-    def sendInstruction():
+    def sendInstruction(self, instruction):
         raise NotImplementedError
     
     def receiveData():
