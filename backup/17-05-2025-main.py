@@ -13,7 +13,7 @@ import os
 import time
 import config
 import database
-from communication import stepperCommunication, mainCommunication, spectromterCommunication, peoCommunication
+from peripherals import stepperCommunication, mainCommunication, spectromterCommunication, peoCommunication
 
 #opens instructions file
 instructions = open(os.path.join('..','settings', 'instructions.txt'), "r")
