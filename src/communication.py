@@ -3,6 +3,7 @@
 import time
 import serial
 from pymodbus.client import ModbusSerialClient
+import config
 
 #defines a parrent class for general communication with devices
 class communication:
@@ -79,7 +80,7 @@ class spectromterCommunication(communication):
 #defines a children class for communication with PEO using modbus
 class peoCommunication(communication):
     def __init__(self, name, port, baudrate, parity, stopbits, bytesize, Upos, Ipos, Uneg, Ineg, Pulsepos, Pause1, Pulseneg, Pause2, Multiplier):
-        super().__init__(self, name, port, baudrate)
+        super().__init__(name, port, baudrate)
         self.parity = parity
         self.stopbits = stopbits
         self.bytesize = bytesize
@@ -91,12 +92,19 @@ class peoCommunication(communication):
         self.Pause1 = Pause1
         self.Pulseneg = Pulseneg
         self.Pause2 = Pause2
-        self.Multiplier = Multiplier
-
-        self.serial = ModbusSerialClient(self.port, self.baudrate, self.parity, self.stopbits, self.bytesize)
+        self.Multiplier = config.PEO_Multiplier
+        
+        self.serial = ModbusSerialClient(
+            method='rtu',
+            port=self.port,
+            baudrate=self.baudrate,
+            parity=self.parity,
+            stopbits=self.stopbits,
+            bytesize=self.bytesize,
+        )
         self.serial.connect()
 
-    def sendInstruction(self, instruction):
+    def sendValues(self):
         #VARIABLES: what do they mean?
         #   Upos
         #   Ipos
@@ -120,9 +128,18 @@ class peoCommunication(communication):
         self.serial.write_register(address=6, value=self.Pulseneg, slave=20)
         self.serial.write_register(address=7, value=self.Pause2, slave=20)
         self.serial.write_register(address=8, value=self.Multiplier, slave=20)
-        
+
+
+
         #forcing coils to update the display
-        serial.write_coil(2, True, slave=20)
-        serial.write_coil(3, True, slave=20)
+        self.serial.write_coil(2, True, slave=20)
+        self.serial.write_coil(3, True, slave=20)
 
         time.sleep(1)
+
+    def on(self):
+        #turning on the PEO
+        self.serial.write_coil(0, True, slave=20)
+    def off(self):
+        #turning off the PEO
+        self.serial.write_coil(1, True, slave=20)

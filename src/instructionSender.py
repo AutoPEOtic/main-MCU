@@ -6,7 +6,7 @@ _stepper = None
 _spectrum = None
 _peo = None
 
-def init_sender(main, stepper, spectrum=None, peo=None):
+def init_sender(main, stepper=None, spectrum=None, peo=None):
     """
     Initialize global device references for instruction sending.
     """
@@ -63,9 +63,13 @@ def send_instruction(instruction, line=0):
             if _spectrum:
                 _spectrum.getSpectrum()
 
-        elif instruction.startswith('PEO'):
+        elif instruction.startswith('SEND PEO VALUES'):
             if _peo:
-                _peo.sendInstruction(instruction)
+                _peo.sendValues()
+        elif instruction.startswith('PEO ON'):
+            _peo.on()
+        elif instruction.startswith('PEO OFF'):
+            _peo.off()
 
         else:
             print(f'{instruction} not recognised at line:{line}')

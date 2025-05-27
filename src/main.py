@@ -9,10 +9,10 @@ import os
 instructions = open(os.path.join('..', 'settings', 'instructions.txt'), "r")
 
 # Initialize communication with devices
-stepper = stepperCommunication('stepper', config.stepper_port, config.stepper_baudrate)
+#stepper = stepperCommunication('stepper', config.stepper_port, config.stepper_baudrate)
 main = mainCommunication('main', config.peripheral_pico_port, config.peripheral_pico_baudrate)
 spectrum = spectromterCommunication('spectrum', config.spectroscope_port, config.spectroscope_baudrate)
-# PEO = peoCommunication(...)  # Uncomment and configure if needed
+PEO = peoCommunication('PEO', config.PEO_port, config.PEO_baudrate, config.PEO_parity, config.PEO_stopbits, config.PEO_bytesize, config.PEO_Upos, config.PEO_Ipos, config.PEO_Uneg, config.PEO_Ineg, config.PEO_Pulsepos, config.PEO_Pause1, config.PEO_Pulseneg, config.PEO_Pause2, config.PEO_Multiplier)  # Uncomment and configure if needed
 
 # Initialize database connection
 database.init(config.database_host, config.database_user, config.database_password, config.database_name, config.database_port)
@@ -20,7 +20,7 @@ database.init(config.database_host, config.database_user, config.database_passwo
 time.sleep(5)  # Wait for devices to initialize
 
 # Initialize instruction sender with device references
-instructionSender.init_sender(main, stepper, spectrum, None)
+instructionSender.init_sender(main, None, spectrum, PEO)
 
 # Process each instruction line by line
 line = 1
