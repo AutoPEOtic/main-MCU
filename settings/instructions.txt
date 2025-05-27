@@ -20,5 +20,89 @@
 # PAUSE {time}
 # this command, for example, PAUSE 035 makes a 30 second pause before executing next command
 #
-PEO
-#M30
+G90
+
+#Move head below extruder
+G1 X-49 Y68
+PAUSE 010
+
+#Turn on solenoid
+SOLENOID 010
+
+#Extrude 10cm wire
+G91
+G1 Z40
+PAUSE 010
+G90
+
+#Cut the wire
+SERVO CUT
+PAUSE 012
+
+#Move head above chamber entry
+G1 X-39 Y0
+PAUSE 010
+
+#Immerse the wire
+G1 Y325
+PAUSE 010
+
+#Pump the solution
+--------------------need command--------------------
+
+#Send PEO values
+SEND PEO VALUES
+
+#Turn on PEO
+PEO on
+
+#Wait for electrolysis
+PAUSE 060
+
+#Turn off PEO
+PEO OFF
+
+#Flush the chamber
+PUMP3 015
+PAUSE 015
+
+#Raise head to maximum
+G1 Y0
+PAUSE 012
+
+#Move head above the fan
+G1 X18
+PAUSE 005
+
+#Lower sample in the dryer
+G1 Y329
+PAUSE 020
+
+#Turn on the fan
+FAN 060
+PAUSE 060
+
+#Raise back the sample
+G1 Y0
+PAUSE 020
+
+#Move head above spectrometer
+G1 X0
+PAUSE 050
+
+#Lower sample into the spectrometer
+G1 Y329
+
+#Capture the spectrum; automatically sends to the database
+SPECTRUM GET
+
+#Move to origin
+G1 X0 Y0
+
+
+
+
+
+
+
+M30
