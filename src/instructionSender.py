@@ -1,4 +1,6 @@
 import time
+import config
+from math import ceil
 
 # Store device references globally (set by init_sender)
 _main = None
@@ -40,6 +42,29 @@ def send_instruction(instruction, line=0):
         elif instruction.startswith('PUMP4'):
             _, delay = instruction.split(' ')
             _main.sendInstruction('d' + delay)
+        
+        elif instruction.startswith('PUMP SOLUTION'):
+            #calculate needed duration in seconds
+            pump1_duration = (config.desired_concentration * config.chamber_volume) / (config.solution1_concentration * config.flow_rate)
+            pump2_duration = ((config.tank1Concentration - config.desired_concentration) * config.chamber_volume) / (config.solution1_concentration * config.flow_rate)
+
+            #convert to format XX,X
+            pump1_duration = ceil(pump1_duration * 10)
+            pump2_duration = ceil(pump2_duration * 10)
+
+            if len(str(pump1_duration)) == 1:
+                pump1_duration = '00' + str(pump1_duration)
+            if len(str(pump2_duration)) == 1:
+                pump2_duration = '00' + str(pump2_duration)
+
+            if len(str(pump1_duration)) == 2:
+                pump1_duration = '0' + str(pump1_duration)
+            if len(str(pump2_duration)) == 2:
+                pump2_duration = '0' + str(pump2_duration)
+
+
+            _main.sendInstruction('a' + pump1_duration)
+            _main.sendInstruction('b' + pump2_duration)
 
         elif instruction.startswith('SOLENOID'):
             _, delay = instruction.split(' ')
@@ -52,7 +77,7 @@ def send_instruction(instruction, line=0):
         elif instruction.startswith('WIRE CUT'):
             _main.sendInstruction('g000')
 
-        elif instruction.startswith(('G1', 'G21', 'G90', 'M30', 'F')):
+        elif instruction.startswith(('G1', 'G21', 'G90', 'G91', 'M30', 'F')):
             _stepper.sendInstruction(instruction)
 
         elif instruction.startswith('PAUSE'):

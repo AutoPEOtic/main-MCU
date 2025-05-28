@@ -48,7 +48,7 @@ G1 Y325
 PAUSE 010
 
 #Pump the solution
---------------------need command--------------------
+PUMP SOLUTION
 
 #Send PEO values
 SEND PEO VALUES
