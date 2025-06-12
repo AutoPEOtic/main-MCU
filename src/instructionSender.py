@@ -52,6 +52,7 @@ def send_instruction(instruction, line=0):
             pump1_duration = ceil(pump1_duration * 10)
             pump2_duration = ceil(pump2_duration * 10)
 
+
             if len(str(pump1_duration)) == 1:
                 pump1_duration = '00' + str(pump1_duration)
             if len(str(pump2_duration)) == 1:

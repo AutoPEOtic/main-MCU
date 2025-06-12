@@ -6,19 +6,19 @@
 # this command moves the servo to cut the wire
 #
 # SOLENOID {time}
-# this command, for example, SOLENOID 001 pulls in solenoid for 1 second
+# this command, for example, SOLENOID 010 pulls in solenoid for 1 second
 #
 # PUMPX {time}
-# this command, for example, PUMP1 010 turns on pump1 for 10 seconds
+# this command, for example, PUMP1 100 turns on pump1 for 10 seconds
 #
 # FAN {time}
-# this command, for example, FAN 035 turns on pump1 for 35 seconds
+# this command, for example, FAN 350 turns on pump1 for 35 seconds
 #
 # SPECTRUM GET
 # this command gets spectrometer data in list format
 #
 # PAUSE {time}
-# this command, for example, PAUSE 035 makes a 30 second pause before executing next command
+# this command, for example, PAUSE 035 makes a 3.5 second pause before executing next command
 #
 G90
 
@@ -54,7 +54,7 @@ PUMP SOLUTION
 SEND PEO VALUES
 
 #Turn on PEO
-PEO on
+PEO ON
 
 #Wait for electrolysis
 PAUSE 060

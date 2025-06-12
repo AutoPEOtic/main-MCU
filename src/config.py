@@ -35,3 +35,11 @@ database_port = 3306
 # database_table = "measurements"
 # database_columns = ["Voltage", "KOH_concentration", "Spectrum"]
 # database_values = [0, 0, "spectrum_data"]  # Example values
+
+# [solution]
+solution1_concentration = 1.0  # Concentration of solution 1 in g/L
+solution2_concentration = 0  # Concentration of solution 2 in g/L
+desired_concentration = 0.1  # Desired concentration in g/L
+
+flow_rate = 0.1  # Speed of the pump in mL/s
+chamber_volume = 10.0  # Volume of the chamber in mL
