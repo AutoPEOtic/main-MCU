@@ -11,7 +11,7 @@ spectroscope_port = "/dev/ttyACM1"
 spectroscope_baudrate = 9600
 
 #[PEO]
-PEO_port = "/dev/ttyUSB0"
+PEO_port = "/dev/ttyUSB1"
 PEO_baudrate = 19200
 PEO_parity = "E"
 PEO_stopbits = 1
