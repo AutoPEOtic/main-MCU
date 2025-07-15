@@ -29,28 +29,28 @@ def send_instruction(instruction, line=0):
     try:
         if instruction.startswith('PUMP1'):
             _, delay = instruction.split(' ')
-            _main.sendInstruction('a' + delay)
+            _main.sendInstruction('a' + delay*10)
 
         elif instruction.startswith('PUMP2'):
             _, delay = instruction.split(' ')
-            _main.sendInstruction('b' + delay)
+            _main.sendInstruction('b' + delay*10)
 
         elif instruction.startswith('PUMP3'):
             _, delay = instruction.split(' ')
-            _main.sendInstruction('c' + delay)
+            _main.sendInstruction('c' + delay*10)
 
         elif instruction.startswith('PUMP4'):
             _, delay = instruction.split(' ')
-            _main.sendInstruction('d' + delay)
+            _main.sendInstruction('d' + delay*10)
         
         elif instruction.startswith('PUMP SOLUTION'):
             #calculate needed duration in seconds
-            pump1_duration = (config.desired_concentration * config.chamber_volume) / (config.solution1_concentration * config.flow_rate)
-            pump2_duration = ((config.tank1Concentration - config.desired_concentration) * config.chamber_volume) / (config.solution1_concentration * config.flow_rate)
+            pump2_duration = (config.desired_concentration * config.chamber_volume) / (config.tank2_concentration * config.flow_rate)
+            pump1_duration = ((config.tank2_concentration - config.desired_concentration) * config.chamber_volume) / (config.tank2_concentration * config.flow_rate)
 
             #convert to format XX,X
-            pump1_duration = ceil(pump1_duration * 10)
-            pump2_duration = ceil(pump2_duration * 10)
+            pump1_duration = ceil(pump1_duration*10)
+            pump2_duration = ceil(pump2_duration*10)
 
 
             if len(str(pump1_duration)) == 1:
@@ -64,16 +64,18 @@ def send_instruction(instruction, line=0):
                 pump2_duration = '0' + str(pump2_duration)
 
 
-            _main.sendInstruction('a' + pump1_duration)
-            _main.sendInstruction('b' + pump2_duration)
+            _main.sendInstruction('a' + str(pump1_duration))
+            time.sleep(int(pump1_duration) / 10 + 1)  # Wait for pump1 to finish before starting pump2
+            _main.sendInstruction('b' + str(pump2_duration))
+            time.sleep(int(pump2_duration) / 10 + 1)  # Wait for pump2 to finish
 
         elif instruction.startswith('SOLENOID'):
             _, delay = instruction.split(' ')
-            _main.sendInstruction('c' + delay)
+            _main.sendInstruction('e' + delay*10)
 
         elif instruction.startswith('FAN'):
             _, delay = instruction.split(' ')
-            _main.sendInstruction('f' + delay)
+            _main.sendInstruction('d' + delay*10)
 
         elif instruction.startswith('WIRE CUT'):
             _main.sendInstruction('g000')
@@ -83,18 +85,21 @@ def send_instruction(instruction, line=0):
 
         elif instruction.startswith('PAUSE'):
             _, delay = instruction.split(' ')
-            time.sleep(int(delay))
+            time.sleep(int(delay)/10)
 
         elif instruction.startswith('SPECTRUM GET'):
             if _spectrum:
                 _spectrum.getSpectrum()
 
         elif instruction.startswith('SEND PEO VALUES'):
+            print("Sending: Update PEO values")
             if _peo:
                 _peo.sendValues()
         elif instruction.startswith('PEO ON'):
+            print("Sending: PEO ON")
             _peo.on()
         elif instruction.startswith('PEO OFF'):
+            print("Sending: PEO OFF")
             _peo.off()
 
         else:

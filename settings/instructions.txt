@@ -2,7 +2,7 @@
 # Y axis represents up-down movement
 # Z axis represents extrusion of wire
 #
-# SERVO CUT
+# WIRE CUT
 # this command moves the servo to cut the wire
 #
 # SOLENOID {time}
@@ -20,71 +20,88 @@
 # PAUSE {time}
 # this command, for example, PAUSE 035 makes a 3.5 second pause before executing next command
 #
+PUMP3 100
+G21
+PAUSE 001
 G90
+PAUSE 001
+F2000
+PAUSE 001
+G10 P0 L20 X0
+PAUSE 001
+G10 P0 L20 Y0
+PAUSE 001
+
+PEO OFF
+
 
 #Move head below extruder
-G1 X-49 Y68
-PAUSE 010
+G1 X-49 Y62
+PAUSE 100
 
 #Turn on solenoid
-SOLENOID 010
+SOLENOID 070
+
 
 #Extrude 10cm wire
 G91
 G1 Z40
-PAUSE 010
+PAUSE 080
 G90
 
 #Cut the wire
-SERVO CUT
-PAUSE 012
+WIRE CUT
+PAUSE 170
 
 #Move head above chamber entry
-G1 X-39 Y0
-PAUSE 010
+G1 X-45
+G1 Y142
+PAUSE 150
 
 #Immerse the wire
-G1 Y325
-PAUSE 010
+G1 X-43 Y320
+PAUSE 250
 
 #Pump the solution
 PUMP SOLUTION
 
 #Send PEO values
 SEND PEO VALUES
+PAUSE 050
 
 #Turn on PEO
 PEO ON
 
 #Wait for electrolysis
-PAUSE 060
+PAUSE 600
 
 #Turn off PEO
 PEO OFF
+PAUSE 050
 
 #Flush the chamber
-PUMP3 015
-PAUSE 015
+PUMP3 200
+PAUSE 200
 
 #Raise head to maximum
-G1 Y0
-PAUSE 012
+G1 Y62
+PAUSE 300
 
 #Move head above the fan
-G1 X18
-PAUSE 005
+G1 X-18
+PAUSE 100
 
 #Lower sample in the dryer
 G1 Y329
-PAUSE 020
+PAUSE 300
 
 #Turn on the fan
-FAN 060
-PAUSE 060
+FAN 600
+PAUSE 600
 
 #Raise back the sample
-G1 Y0
-PAUSE 020
+G1 Y130
+PAUSE 200
 
 #Move head above spectrometer
 G1 X0
@@ -92,6 +109,7 @@ PAUSE 050
 
 #Lower sample into the spectrometer
 G1 Y329
+PAUSE 250
 
 #Capture the spectrum; automatically sends to the database
 SPECTRUM GET

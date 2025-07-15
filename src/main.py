@@ -20,20 +20,22 @@ database.init(config.database_host, config.database_user, config.database_passwo
 time.sleep(2)
 
 # Initialize instruction sender with device references
-instructionSender.init_sender(main, None, spectrum, PEO)
+instructionSender.init_sender(main, stepper, spectrum, PEO)
 
 # Process each instruction line by line
 line = 1
 for instruction in instructions:
     instructionSender.send_instruction(instruction, line)
 
-    if instruction.startswith('SPECTRUM GET'):
+    if instruction.startswith('LINE ONE'):
+        line = 1
+    elif instruction.startswith('SPECTRUM GET'):
         spectrum_data = spectrum.getSpectrum()
         voltage = 0  # Replace with actual voltage value
         koh_concentration = 0  # Replace with actual KOH concentration value
 
         # Generate query and send it to the database
-        query = database.generate_query(voltage, koh_concentration, spectrum_data)
+        query = database.generate_query(config.PEO_Upos, config.desired_concentration, spectrum_data)
         database.send(query)
 
     line += 1
