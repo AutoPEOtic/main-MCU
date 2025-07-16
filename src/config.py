@@ -1,25 +1,25 @@
-#[main arduino]
-peripheral_pico_port = "/dev/ttyACM0"
+#[main pico]
+peripheral_pico_description = "Pico - Board CDC"
 peripheral_pico_baudrate = 115200
 
 #[stepper arduino]
-stepper_port = "/dev/ttyUSB0"
+stepper_description = "USB Serial"
 stepper_baudrate = 115200
 
 #[spectroscope]
-spectroscope_port = "/dev/ttyACM1"
+spectroscope_description = "Board in FS mode - Board CDC"
 spectroscope_baudrate = 9600
 
 #[PEO]
-PEO_port = "/dev/ttyUSB1"
+PEO_description = "USB2.0-Serial"
 PEO_baudrate = 19200
 PEO_parity = "E"
 PEO_stopbits = 1
 PEO_bytesize = 8
-PEO_Upos = 5
-PEO_Ipos = 1
-PEO_Uneg = 1
-PEO_Ineg = 1
+PEO_Upos = 500
+PEO_Ipos = 200
+PEO_Uneg = 100
+PEO_Ineg = 0
 PEO_Pulsepos = 10
 PEO_Pause1 = 10
 PEO_Pulseneg = 10
@@ -37,9 +37,9 @@ database_port = 3306
 # database_values = [0, 0, "spectrum_data"]  # Example values
 
 # [solution]
-solution1_concentration = 1.0  # Concentration of solution 1 in g/L
-solution2_concentration = 0  # Concentration of solution 2 in g/L
-desired_concentration = 0.1  # Desired concentration in g/L
+tank1_concentration = 0  # Distilled water
+tank2_concentration = 1  # Concentration of KOH in g/L
+desired_concentration = 0.5  # Desired concentration in g/L
 
-flow_rate = 0.1  # Speed of the pump in mL/s
-chamber_volume = 10.0  # Volume of the chamber in mL
+flow_rate = 2.26  # Speed of the pump in mL/s at 83% duty cycle
+chamber_volume = 15.0  # Volume of the chamber in mL
