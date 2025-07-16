@@ -1,6 +1,8 @@
 import time
 import config
+import subprocess
 from math import ceil
+from peripherals import mainCommunication, stepperCommunication, spectromterCommunication, peoCommunication
 
 # Store device references globally (set by init_sender)
 _main = None

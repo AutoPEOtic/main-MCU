@@ -79,6 +79,10 @@ PAUSE 600
 PEO OFF
 PAUSE 050
 
+#Reconnect all ports
+RECONNECT
+PAUSE 050
+
 #Flush the chamber
 PUMP3 200
 PAUSE 200

@@ -2,16 +2,17 @@
 
 import time
 import serial
+import serial.tools.list_ports
 from pymodbus.client import ModbusSerialClient
 import config
 
 #defines a parrent class for general communication with devices
 class communication:
-    def __init__(self, name, port, baudrate):
+    def __init__(self, name, description, baudrate):
         self.name = name
-        self.port = port
+        self.description = description
         self.baudrate = baudrate
-        self.serial = serial.Serial(self.port, self.baudrate, timeout=1)
+        #self.serial = serial.Serial(self.port, self.baudrate, timeout=1)
 
     def sendInstruction(self, instruction):
         raise NotImplementedError
@@ -19,23 +20,37 @@ class communication:
     def receiveData():
         raise NotImplementedError
 
-#TODO test progress: PASSED
+
+
+
+
 #defines a children class for communication with the main Arduino using serial
 class mainCommunication(communication):
-    def __init__(self, name, port, baudrate):
-        super().__init__(name, port, baudrate)
-        self.serial = serial.Serial(self.port, self.baudrate, timeout=1)
+    def __init__(self, name, description, baudrate):
+        super().__init__(name, description, baudrate)
+        ports = list(serial.tools.list_ports.comports())
+        for port in ports:
+            if port.description == self.description:
+                self.serial = serial.Serial(port.device, self.baudrate, timeout=1)
+                break
+        
 
     def sendInstruction(self, instruction):
         self.serial.write((f'{instruction}\n').encode())
         print(f'Sending: {instruction.strip()}')
 
-#TODO test progress: PASSED
+
+
+
 #defines a children class for communication with the stepper Arduino using serial
 class stepperCommunication(communication):
-    def __init__(self, name, port, baudrate):
-        super().__init__(name, port, baudrate)
-        self.serial = serial.Serial(self.port, self.baudrate, timeout=1)
+    def __init__(self, name, description, baudrate):
+        super().__init__(name, description, baudrate)
+        ports = list(serial.tools.list_ports.comports())
+        for port in ports:
+            if port.description == self.description:
+                self.serial = serial.Serial(port.device, self.baudrate, timeout=1)
+                break
         self.__grblInit()
 
     def sendInstruction(self, instruction):
@@ -55,12 +70,19 @@ class stepperCommunication(communication):
         response = self.serial.readline().decode().strip()
         print(f'Unlock response: {response}')
 
-#TODO test progress: PASSED
+
+
+
+
 #defines a children class for communication with spectroscope's raspberry pico using UART
 class spectromterCommunication(communication):
-    def __init__(self, name, port, baudrate):
-        super().__init__(name, port, baudrate)
-        self.serial = serial.Serial(self.port, self.baudrate)
+    def __init__(self, name, description, baudrate):
+        super().__init__(name, description, baudrate)
+        ports = list(serial.tools.list_ports.comports())
+        for port in ports:
+            if port.description == self.description:
+                self.serial = serial.Serial(port.device, self.baudrate, timeout=1)
+                break
 
     def getSpectrum(self):
         #PUROPOSE: to receive an array that contains spectrum data
@@ -76,11 +98,13 @@ class spectromterCommunication(communication):
         print(f'Response: {spectrum}')
         return spectrum
 
-#TODO test progress: NOT PERFORMED
+
+
+
 #defines a children class for communication with PEO using modbus
 class peoCommunication(communication):
-    def __init__(self, name, port, baudrate, parity, stopbits, bytesize, Upos, Ipos, Uneg, Ineg, Pulsepos, Pause1, Pulseneg, Pause2, Multiplier):
-        super().__init__(name, port, baudrate)
+    def __init__(self, name, description, baudrate, parity, stopbits, bytesize, Upos, Ipos, Uneg, Ineg, Pulsepos, Pause1, Pulseneg, Pause2, Multiplier):
+        super().__init__(name, description, baudrate)
         self.parity = parity
         self.stopbits = stopbits
         self.bytesize = bytesize
@@ -94,15 +118,18 @@ class peoCommunication(communication):
         self.Pause2 = Pause2
         self.Multiplier = config.PEO_Multiplier
         
-        self.serial = ModbusSerialClient(
-            method='rtu',
-            port=self.port,
-            baudrate=self.baudrate,
-            parity=self.parity,
-            stopbits=self.stopbits,
-            bytesize=self.bytesize,
-        )
-        self.serial.connect()
+        ports = list(serial.tools.list_ports.comports())
+        for port in ports:
+            if port.description == self.description:
+                self.serial = ModbusSerialClient(
+                    method='rtu',
+                    port=port.device,
+                    baudrate=self.baudrate,
+                    parity=self.parity,
+                    stopbits=self.stopbits,
+                    bytesize=self.bytesize,
+                )
+                self.serial.connect()
 
     def sendValues(self):
         #VARIABLES: what do they mean?
