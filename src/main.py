@@ -1,58 +1,8 @@
-from peripherals import stepperCommunication, mainCommunication, spectromterCommunication, peoCommunication
-import subprocess
-import instructionSender
-import database
-import config
-import time
-import os
+from src.autopeotic import autopeotic
 
-# Open instructions file
-instructions = open(os.path.join('..', 'settings', 'instructions.txt'), "r")
+autopeotic = autopeotic()
 
-# Initialize communication with devices
-main = mainCommunication('main', config.peripheral_pico_description, config.peripheral_pico_baudrate)
-stepper = stepperCommunication('stepper', config.stepper_description, config.stepper_baudrate)
-spectrum = spectromterCommunication('spectrum', config.spectroscope_description, config.spectroscope_baudrate)
-PEO = peoCommunication('PEO', config.PEO_description, config.PEO_baudrate, config.PEO_parity, config.PEO_stopbits, config.PEO_bytesize, config.PEO_Upos, config.PEO_Ipos, config.PEO_Uneg, config.PEO_Ineg, config.PEO_Pulsepos, config.PEO_Pause1, config.PEO_Pulseneg, config.PEO_Pause2, config.PEO_Multiplier)  # Uncomment and configure if needed
+for instruction in autopeotic.open_instructions():
+    autopeotic.send_instruction(instruction)
 
-# Initialize database connection
-database.init(config.database_host, config.database_user, config.database_password, config.database_name, config.database_port)
-
-time.sleep(2)
-
-# Initialize instruction sender with device references
-instructionSender.init_sender(main, stepper, spectrum, PEO)
-
-# Process each instruction line by line
-line = 1
-for instruction in instructions:
-    instructionSender.send_instruction(instruction, line)
-
-    if instruction.startswith('LINE ONE'):
-        line = 1
-    elif instruction.startswith('RECONNECT'):
-        print("Reconnecting all devices")
-
-        subprocess.run(['sudo', 'uhubctl', '-R'])
-
-        time.sleep(2)  # Wait for devices to reconnect
-        subprocess.run()
-        reconnect()
-    elif instruction.startswith('SPECTRUM GET'):
-        spectrum_data = spectrum.getSpectrum()
-        voltage = 0  # Replace with actual voltage value
-        koh_concentration = 0  # Replace with actual KOH concentration value
-
-        # Generate query and send it to the database
-        query = database.generate_query(config.PEO_Upos, config.desired_concentration, spectrum_data)
-        database.send(query)
-
-    line += 1
-
-def reconnect():
-    main = mainCommunication('main', config.peripheral_pico_description, config.peripheral_pico_baudrate)
-    stepper = stepperCommunication('stepper', config.stepper_description, config.stepper_baudrate)
-    spectrum = spectromterCommunication('spectrum', config.spectroscope_description, config.spectroscope_baudrate)
-    PEO = peoCommunication('PEO', config.PEO_description, config.PEO_baudrate, config.PEO_parity, config.PEO_stopbits, config.PEO_bytesize, config.PEO_Upos, config.PEO_Ipos, config.PEO_Uneg, config.PEO_Ineg, config.PEO_Pulsepos, config.PEO_Pause1, config.PEO_Pulseneg, config.PEO_Pause2, config.PEO_Multiplier)
-    
-    instructionSender.init_sender(main, stepper, spectrum, PEO)
+    autopeotic.line += 1
