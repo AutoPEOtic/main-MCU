@@ -42,4 +42,4 @@ tank2_concentration = 1  # Concentration of KOH in g/L
 desired_concentration = 0.5  # Desired concentration in g/L
 
 flow_rate = 2.26  # Speed of the pump in mL/s at 83% duty cycle
-chamber_volume = 15.0  # Volume of the chamber in mL
+chamber_volume = 17.0  # Volume of the chamber in mL

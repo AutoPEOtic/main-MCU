@@ -20,7 +20,8 @@
 # PAUSE {time}
 # this command, for example, PAUSE 035 makes a 3.5 second pause before executing next command
 #
-PUMP3 100
+#PUMP3 150
+#PAUSE 150
 G21
 PAUSE 001
 G90
@@ -33,6 +34,7 @@ G10 P0 L20 Y0
 PAUSE 001
 
 PEO OFF
+PAUSE 010
 
 
 #Move head below extruder
@@ -73,7 +75,7 @@ PAUSE 050
 PEO ON
 
 #Wait for electrolysis
-PAUSE 600
+PAUSE 150
 
 #Turn off PEO
 PEO OFF
@@ -81,31 +83,38 @@ PAUSE 050
 
 #Reconnect all ports
 RECONNECT
-PAUSE 050
+PAUSE 010
+
+G21
+PAUSE 001
+G90
+PAUSE 001
+F2000
+PAUSE 001
+G10 P0 L20 X-43
+PAUSE 001
+G10 P0 L20 Y320
+PAUSE 001
 
 #Flush the chamber
-PUMP3 200
-PAUSE 200
+PUMP3 100
+PAUSE 100
 
 #Raise head to maximum
-G1 Y62
+G1 Y80
 PAUSE 300
 
 #Move head above the fan
-G1 X-18
-PAUSE 100
-
-#Lower sample in the dryer
-G1 Y329
-PAUSE 300
+#G1 X-18 Y329
+#PAUSE 300
 
 #Turn on the fan
-FAN 600
-PAUSE 600
+#FAN 050
+#PAUSE 050
 
 #Raise back the sample
-G1 Y130
-PAUSE 200
+#G1 Y130
+#PAUSE 200
 
 #Move head above spectrometer
 G1 X0
@@ -113,18 +122,11 @@ PAUSE 050
 
 #Lower sample into the spectrometer
 G1 Y329
-PAUSE 250
+PAUSE 350
 
 #Capture the spectrum; automatically sends to the database
 SPECTRUM GET
 
 #Move to origin
 G1 X0 Y0
-
-
-
-
-
-
-
-M30
+PAUSE 600

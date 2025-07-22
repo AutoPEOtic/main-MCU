@@ -18,13 +18,16 @@ class autopeotic:
 
     def connect(self):
         print("Reconnecting all devices")
-        subprocess.run(['sudo', 'uhubctl', '-R'])
-        time.sleep(2)
+        subprocess.run(['sudo', 'uhubctl', '-a','cycle','-l', '1'])
+        subprocess.run(['sudo', 'uhubctl', '-a','cycle','-l', '2'])
+        subprocess.run(['sudo', 'uhubctl', '-a','cycle','-l', '3'])
+        subprocess.run(['sudo', 'uhubctl', '-a','cycle','-l', '4'])
+        time.sleep(5)
         self.peripherals = peripheral_communication(config.peripheral_pico_description, config.peripheral_pico_baudrate)
         self.stepper = stepper_communication(config.stepper_description, config.stepper_baudrate)
         self.spectrum = spectrometer_communication(config.spectroscope_description, config.spectroscope_baudrate)
         self.PEO = peo_communication(config.PEO_description, config.PEO_baudrate, config.PEO_parity, config.PEO_stopbits, config.PEO_bytesize, config.PEO_Upos, config.PEO_Ipos, config.PEO_Uneg, config.PEO_Ineg, config.PEO_Pulsepos, config.PEO_Pause1, config.PEO_Pulseneg, config.PEO_Pause2, config.PEO_Multiplier)  # Uncomment and configure if needed
-        time.sleep(2)
+        time.sleep(5)
         self.sender = sender(self.peripherals, self.stepper, self.spectrum, self.PEO)
 
 

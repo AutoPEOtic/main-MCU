@@ -9,7 +9,7 @@ class database():
                                           database=config.database_name,
                                           port=config.database_port,
                                           cursorclass=pymysql.cursors.DictCursor,
-                                          autocommin=True)
+                                          autocommit=True)
 
 
     def send(self, query):

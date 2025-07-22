@@ -7,12 +7,12 @@ class sender():
         self.stepper = stepper
         self.spectrum = spectrum
         self.peo = peo
-        #self.autopeotic_db = database()
+        self.autopeotic_db = database()
         
     def send_instruction(self, instruction, line):
         instruction.strip()
 
-        if instruction=="" or instruction.startswith('#'):  pass
+        if instruction=="" or instruction.startswith('#'):  return
 
         elif instruction.startswith('PUMP'):
             _, delay = instruction.split(' ')
@@ -21,7 +21,7 @@ class sender():
             elif instruction.startswith('PUMP3'): self.peripherals.send_instruction('c' + delay)
             elif instruction.startswith('PUMP4'): self.peripherals.send_instruction('d' + delay)
             elif instruction.startswith('PUMP SOLUTION'):
-                pump1_duration, pump2_duration = self.peripherals.pump_concentrations()
+                pump1_duration, pump2_duration = self.peripherals.concentration_mixing()
 
                 self.peripherals.send_instruction('a' + str(pump1_duration)); time.sleep(int(pump1_duration) / 10 + 1)  # Wait for pump1 to finish before starting pump2
                 self.peripherals.send_instruction('b' + str(pump2_duration)); time.sleep(int(pump2_duration) / 10 + 1)  # Wait for pump2 to finish

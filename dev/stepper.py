@@ -31,3 +31,8 @@ class stepper_communication():
         time.sleep(1)
         response = self.serial.readline().decode().strip()
         print(f'Unlock response: {response}')
+        
+        self.serial.write(b'?')
+        time.sleep(1)
+        response = self.serial.readline().decode().strip()
+        print(f'coordinates: {response}')
