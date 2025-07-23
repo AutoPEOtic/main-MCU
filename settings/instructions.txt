@@ -1,27 +1,3 @@
-# X axis represents left-right movement
-# Y axis represents up-down movement
-# Z axis represents extrusion of wire
-#
-# WIRE CUT
-# this command moves the servo to cut the wire
-#
-# SOLENOID {time}
-# this command, for example, SOLENOID 010 pulls in solenoid for 1 second
-#
-# PUMPX {time}
-# this command, for example, PUMP1 100 turns on pump1 for 10 seconds
-#
-# FAN {time}
-# this command, for example, FAN 350 turns on pump1 for 35 seconds
-#
-# SPECTRUM GET
-# this command gets spectrometer data in list format
-#
-# PAUSE {time}
-# this command, for example, PAUSE 035 makes a 3.5 second pause before executing next command
-#
-#PUMP3 150
-#PAUSE 150
 G21
 PAUSE 001
 G90

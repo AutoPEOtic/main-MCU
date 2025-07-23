@@ -25,6 +25,7 @@ PEO_Pause1 = 10
 PEO_Pulseneg = 10
 PEO_Pause2 = 10
 PEO_Multiplier = 3
+PEO_time = 30
 
 # [database]
 database_host = "localhost"
