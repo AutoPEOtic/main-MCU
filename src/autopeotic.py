@@ -17,12 +17,19 @@ class autopeotic:
         self.line = 1
         self.status = False
         self.progress = "not running"
-        self.PEO_time = config.PEO_time
-        self.KOH_concentration = config.desired_concentration
-        self.Upos = config.PEO_Upos
+        #self.PEO_time = config.PEO_time
+        #self.KOH_concentration = config.desired_concentration
+        #self.Upos = config.PEO_Upos
         self.Uneg = config.PEO_Uneg
         self.Ipos = config.PEO_Ipos
         self.Ineg = config.PEO_Ineg
+
+        # --------------- CHANGING VARIABLES ---------------
+        self.total_count = len(config.Upos_array) * len(config.time_array) * len(config.KOH_array)
+        self.count = 0
+        self.Upos = 0
+        self.KOH_concentration = 0
+        self.PEO_time = 0
 
     def connect(self):
         print("Reconnecting all devices")
@@ -73,8 +80,8 @@ class autopeotic:
         elif instruction.startswith('WIRE CUT'):    self.peripherals.send_instruction('g000'); self.progress = "cutting wire"
         elif instruction.startswith('SPECTRUM GET'):    self.autopeotic_db.send(self.autopeotic_db.generate_query(self.spectrum.get_spectrum())); self.progress = "measuring spectrum"
         elif instruction.startswith(('G1', 'G21', 'G90', 'G91', 'M30', 'F')):   self.stepper.send_instruction(instruction)
-        elif instruction.startswith('SEND PEO VALUES'): self.peo.send_values(); self.progress = "doing PEO"
-        elif instruction.startswith('PEO ON'):  self.peo.on(); self.progress = "doing PEO"
+        elif instruction.startswith('SEND PEO VALUES'): self.peo.send_values(self.Upos); self.progress = "doing PEO"
+        elif instruction.startswith('PEO ON'):  self.peo.on(self.PEO_time); self.progress = "doing PEO"
         elif instruction.startswith('PEO OFF'): self.peo.off()        
         elif instruction.startswith('PAUSE'):   _, delay = instruction.split(' ');  time.sleep(int(delay)/10)
         else: print(f'ERROR instruction "{instruction}" not recognised in line {self.line}')

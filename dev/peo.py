@@ -32,13 +32,13 @@ class peo_communication():
                                                 )
                 self.serial.connect()
 
-    def send_values(self):
+    def send_values(self, Upos):
         #COMMENT: for PEO datasheet go to peoDatasheet.txt;
 
         print("Sending: Update PEO values")
         
         #writing the values to the registers
-        self.serial.write_register(address=0, value=self.Upos, slave=20)
+        self.serial.write_register(address=0, value=int(Upos), slave=20)
         self.serial.write_register(address=1, value=self.Ipos, slave=20)
         self.serial.write_register(address=2, value=self.Uneg, slave=20)
         self.serial.write_register(address=3, value=self.Ineg, slave=20)
@@ -56,9 +56,11 @@ class peo_communication():
         
         time.sleep(1)
 
-    def on(self):
+    def on(self, PEO_time):
         print('Sending: PEO ON')
         self.serial.write_coil(0, True, slave=20)
+        print(f"PEO duration: {PEO_time}")
+        time.sleep(float(PEO_time))
 
     def off(self):
         print('Sending: PEO OFF')

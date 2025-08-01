@@ -12,10 +12,9 @@ PAUSE 001
 PEO OFF
 PAUSE 010
 
-
 #Move head below extruder
-G1 X-49 Y62
-PAUSE 100
+G1 X-24.432 Y1
+PAUSE 050
 
 #Turn on solenoid
 SOLENOID 070
@@ -32,13 +31,12 @@ WIRE CUT
 PAUSE 170
 
 #Move head above chamber entry
-G1 X-45
-G1 Y142
-PAUSE 150
+G1 X-20
+PAUSE 020
 
 #Immerse the wire
-G1 X-43 Y320
-PAUSE 250
+G1 Y38
+PAUSE 050
 
 #Pump the solution
 PUMP SOLUTION
@@ -51,7 +49,7 @@ PAUSE 050
 PEO ON
 
 #Wait for electrolysis
-PAUSE 150
+#PAUSE 150
 
 #Turn off PEO
 PEO OFF
@@ -67,9 +65,9 @@ G90
 PAUSE 001
 F2000
 PAUSE 001
-G10 P0 L20 X-43
+G10 P0 L20 X-20
 PAUSE 001
-G10 P0 L20 Y320
+G10 P0 L20 Y38
 PAUSE 001
 
 #Flush the chamber
@@ -77,8 +75,8 @@ PUMP3 100
 PAUSE 100
 
 #Raise head to maximum
-G1 Y80
-PAUSE 300
+G1 Y1
+PAUSE 050
 
 #Move head above the fan
 #G1 X-18 Y329
@@ -97,12 +95,12 @@ G1 X0
 PAUSE 050
 
 #Lower sample into the spectrometer
-G1 Y329
-PAUSE 350
+G1 Y40
+PAUSE 060
 
 #Capture the spectrum; automatically sends to the database
 SPECTRUM GET
 
 #Move to origin
 G1 X0 Y0
-PAUSE 600
+PAUSE 050

@@ -7,10 +7,12 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 temp_file = open("temp.txt", "r")
 try:
-    status, progress, PEO_time, KOH_concentration, Upos, Uneg, Ipos, Ineg = temp_file.read().split(";")
+    status, progress, count, total_count, PEO_time, KOH_concentration, Upos, Uneg, Ipos, Ineg = temp_file.read().split(";")
 except:
     status = False
     progress = "no progress"
+    count = 0
+    total_count = 0
     PEO_time = KOH_concentration = Upos = Uneg = Ipos = Ineg = "N/A"
 st.set_page_config(page_title="AutoPEOtic control panel", layout="wide")
 
@@ -72,6 +74,7 @@ with left_col:
             temp_file.close()
 
     st.subheader("Progress")
+    st.text(f"{count}/{total_count} cycles executed")
     if progress == "cutting wire":
         st.info("cutting wire")
     else: st.text("cutting wire")
