@@ -84,6 +84,7 @@ class autopeotic:
         elif instruction.startswith('PEO ON'):  self.peo.on(self.PEO_time); self.progress = "doing PEO"
         elif instruction.startswith('PEO OFF'): self.peo.off()        
         elif instruction.startswith('PAUSE'):   _, delay = instruction.split(' ');  time.sleep(int(delay)/10)
+        elif instruction.startswith('MOTOR'): _, delay = instruction.split(' '); self.peripherals.send_instruction('m' + delay); self.progress = "motoring"
         else: print(f'ERROR instruction "{instruction}" not recognised in line {self.line}')
 
     def get_spectrum(self):

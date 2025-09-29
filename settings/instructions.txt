@@ -19,6 +19,8 @@ PAUSE 050
 #Turn on solenoid
 SOLENOID 070
 
+MOTOR 100
+PAUSE 080
 
 #Extrude 10cm wire
 G91
@@ -26,6 +28,7 @@ G1 Z40
 PAUSE 080
 G90
 
+PAUSE 080
 #Cut the wire
 WIRE CUT
 PAUSE 170
