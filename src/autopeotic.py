@@ -83,7 +83,14 @@ class autopeotic:
         elif instruction.startswith('SEND PEO VALUES'): self.peo.send_values(self.Upos); self.progress = "doing PEO"
         elif instruction.startswith('PEO ON'):  self.peo.on(self.PEO_time); self.progress = "doing PEO"
         elif instruction.startswith('PEO OFF'): self.peo.off()        
-        elif instruction.startswith('PAUSE'):   _, delay = instruction.split(' ');  time.sleep(int(delay)/10)
+        elif instruction.startswith('PAUSE'):
+            instruction = instruction.split(';')[0].strip()
+            parts = instruction.split(' ')
+            if len(parts) == 2 and parts[1].isdigit():
+                _, delay = parts
+                time.sleep(int(delay)/10)
+            else:
+                print(f"Invalid PAUSE instruction: {instruction}")
         elif instruction.startswith("HOME"):    self.stepper.home(); self.progress = "homing"
         else: print(f'ERROR instruction "{instruction}" not recognised in line {self.line}')
 
