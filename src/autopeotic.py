@@ -1,4 +1,4 @@
-from dev.peripherals import peripheral_communication
+from dev.peripherals import PeripheralMCU
 from dev.peo import peo_communication
 from dev.spectrometer import spectrometer_communication
 from dev.stepper import stepper_communication
@@ -38,7 +38,8 @@ class autopeotic:
         subprocess.run(['sudo', 'uhubctl', '-a','cycle','-l', '3'])
         subprocess.run(['sudo', 'uhubctl', '-a','cycle','-l', '4'])
         time.sleep(5)
-        self.peripherals = peripheral_communication(config.peripheral_pico_description, config.peripheral_pico_baudrate)
+        self.peripherals = PeripheralMCU(config.peripheral_pico_description, config.peripheral_pico_baudrate)
+
         self.stepper = stepper_communication(config.stepper_description, config.stepper_baudrate)
         self.spectrum = spectrometer_communication(config.spectroscope_description, config.spectroscope_baudrate)
         self.peo = peo_communication(config.PEO_description, config.PEO_baudrate, config.PEO_parity, config.PEO_stopbits, config.PEO_bytesize, config.PEO_Upos, config.PEO_Ipos, config.PEO_Uneg, config.PEO_Ineg, config.PEO_Pulsepos, config.PEO_Pause1, config.PEO_Pulseneg, config.PEO_Pause2, config.PEO_Multiplier)  # Uncomment and configure if needed
@@ -52,6 +53,18 @@ class autopeotic:
         return instructions
     
     def send_instruction(self, instruction):
+                # --- Peripheral mixing Pico commands ---
+        # Use "SYR " prefix in instructions.txt to avoid conflict with GRBL HOME.
+        if instruction.startswith("SYR "):
+            cmd = instruction[4:].strip()
+            self.peripherals.send_command(cmd)
+            return
+
+        # Direct peripheral commands (no prefix)
+        if instruction.startswith(("CH", "INIT", "DEOXIDIZE", "SOLENOID", "FLUSH", "SOLUTION")):
+            self.peripherals.send_command(instruction)
+            return
+
         if instruction.startswith('LINE ONE'):
             self.line = 1
 
