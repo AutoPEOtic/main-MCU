@@ -45,7 +45,7 @@ class autopeotic:
         self.peo = peo_communication(config.PEO_description, config.PEO_baudrate, config.PEO_parity, config.PEO_stopbits, config.PEO_bytesize, config.PEO_Upos, config.PEO_Ipos, config.PEO_Uneg, config.PEO_Ineg, config.PEO_Pulsepos, config.PEO_Pause1, config.PEO_Pulseneg, config.PEO_Pause2, config.PEO_Multiplier)  # Uncomment and configure if needed
         time.sleep(5)
         self.autopeotic_db = database()
-        self.sender = sender(self.peripherals, self.stepper, self.spectrum, self.peo)
+        #self.sender = sender(self.peripherals, self.stepper, self.spectrum, self.peo)
 
 
     def open_instructions(self):
@@ -61,7 +61,7 @@ class autopeotic:
             return
 
         # Direct peripheral commands (no prefix)
-        if instruction.startswith(("CH", "INIT", "DEOXIDIZE", "SOLENOID", "FLUSH", "SOLUTION")):
+        if instruction.startswith(("CH", "INIT", "DEOXIDIZE", "SOLENOID", "FLUSH", "SOLUTION", "CUT", "FAN", "STATUS")):
             self.peripherals.send_command(instruction)
             return
 
@@ -75,22 +75,6 @@ class autopeotic:
         #instruction.strip()
 
         elif instruction=="" or instruction.startswith('#'):  return
-
-        elif instruction.startswith('PUMP'):
-            _, delay = instruction.split(' ')
-            if instruction.startswith('PUMP1'): self.peripherals.send_instruction('a' + delay); self.progress = "pumping"
-            elif instruction.startswith('PUMP2'): self.peripherals.send_instruction('b' + delay); self.progress = "pumping"
-            elif instruction.startswith('PUMP3'): self.peripherals.send_instruction('c' + delay); self.progress = "flushing"
-            elif instruction.startswith('PUMP4'): self.peripherals.send_instruction('d' + delay)
-            elif instruction.startswith('PUMP SOLUTION'):
-                pump1_duration, pump2_duration = self.peripherals.concentration_mixing()
-                self.progress = "doing PEO"
-                self.peripherals.send_instruction('a' + str(pump1_duration)); time.sleep(int(pump1_duration) / 10 + 1)  # Wait for pump1 to finish before starting pump2
-                self.peripherals.send_instruction('b' + str(pump2_duration)); time.sleep(int(pump2_duration) / 10 + 1)  # Wait for pump2 to finish
-
-        elif instruction.startswith('SOLENOID'):    _, delay = instruction.split(' '); self.peripherals.send_instruction('e' + delay)
-        elif instruction.startswith('FAN'): _, delay = instruction.split(' '); self.peripherals.send_instruction('d' + delay); self.progress = "drying"
-        elif instruction.startswith('WIRE CUT'):    self.peripherals.send_instruction('g000'); self.progress = "cutting wire"
         elif instruction.startswith('SPECTRUM GET'):    self.autopeotic_db.send(self.autopeotic_db.generate_query(self.spectrum.get_spectrum())); self.progress = "measuring spectrum"
         elif instruction.startswith(('G1', 'G21', 'G90', 'G91', 'M30', 'F')):   self.stepper.send_instruction(instruction)
         elif instruction.startswith('SEND PEO VALUES'): self.peo.send_values(self.Upos); self.progress = "doing PEO"

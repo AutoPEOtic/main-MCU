@@ -12,7 +12,7 @@ HOME           ; сделать homing по всем осям
 PAUSE 050      ; небольшая пауза, чтобы GRBL успел отработать
 
 SYR HOME ALL
-
+adjusted solenoid
 G10 P0 L20 X0   ; установить текущую координату X = 0 для системы координат P0
 PAUSE 001
 G10 P0 L20 Y0   ; установить текущую координату Y = 0
@@ -23,9 +23,8 @@ G1 X-24.432 Y1  ; линейное перемещение в точку X=-24.43
 PAUSE 050
 
 #Turn on solenoid
-SOLENOID 070
+SOLENOID ON
 
-MOTOR 100
 PAUSE 080
 
 #Extrude 10cm wire
@@ -36,7 +35,7 @@ G90
 
 PAUSE 080
 #Cut the wire
-WIRE CUT
+CUT
 PAUSE 170
 
 #Move head above chamber entry
@@ -48,7 +47,7 @@ G1 Y38
 PAUSE 050
 
 #Pump the solution
-PUMP SOLUTION
+SOLUTION 10 CH1 0.5 CH2 0.5
 
 #Send PEO values
 SEND PEO VALUES
@@ -80,7 +79,7 @@ G10 P0 L20 Y38
 PAUSE 001
 
 #Flush the chamber
-PUMP3 100
+FLUSH 100
 PAUSE 100
 
 #Raise head to maximum
