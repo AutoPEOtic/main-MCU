@@ -19,7 +19,7 @@ KOH_array = np.linspace(KOH_start, KOH_stop, KOH_amount)
 
 
 #[peripheral pico]
-peripheral_pico_port = peripheral_pico_port = "/dev/serial/by-id/usb-MicroPython_Board_in_FS_mode_067758c1fcf370c7-if00"
+peripheral_pico_port = "/dev/serial/by-id/usb-MicroPython_Board_in_FS_mode_067758c1fcf370c7-if00"
 
 peripheral_pico_description = "Board in FS mode - Board CDC"
 peripheral_pico_baudrate = 115200

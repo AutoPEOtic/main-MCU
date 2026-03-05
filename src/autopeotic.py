@@ -1,4 +1,4 @@
-from dev.peripherals import PeripheralMCU
+from dev.peripherals import peripheral_communication
 from dev.peo import peo_communication
 from dev.spectrometer import spectrometer_communication
 from dev.stepper import stepper_communication
@@ -37,12 +37,12 @@ class autopeotic:
         subprocess.run(['sudo', 'uhubctl', '-a', 'cycle', '-l', '4'])
         time.sleep(5)
 
-        self.peripherals = PeripheralMCU(
-            description=config.peripheral_pico_description,
-            baudrate=config.peripheral_pico_baudrate,
+        self.peripherals = peripheral_communication(
             port=config.peripheral_pico_port,
+            baudrate=config.peripheral_pico_baudrate,
+            timeout_s=1.0
         )
-        self.peripherals = PeripheralMCU(config.peripheral_pico_description, config.peripheral_pico_baudrate)
+        self.peripherals.send_command("STATUS")
 
         self.stepper = stepper_communication(config.stepper_description, config.stepper_baudrate)
         self.spectrum = spectrometer_communication(config.spectroscope_description, config.spectroscope_baudrate)
@@ -98,13 +98,9 @@ class autopeotic:
         #else: self.sender.send_instruction(self, instruction, self.line)
         #instruction.strip()
 
-        elif instruction=="" or instruction.startswith('#'):  return
-        elif instruction.startswith('SPECTRUM GET'):    self.autopeotic_db.send(self.autopeotic_db.generate_query(self.spectrum.get_spectrum())); self.progress = "measuring spectrum"
-        elif instruction.startswith(('G1', 'G21', 'G90', 'G91', 'M30', 'F')):   self.stepper.send_instruction(instruction)
-        elif instruction.startswith('SEND PEO VALUES'): self.peo.send_values(self.Upos); self.progress = "doing PEO"
-        elif instruction.startswith('PEO ON'):  self.peo.on(self.PEO_time); self.progress = "doing PEO"
-        elif instruction.startswith('PEO OFF'): self.peo.off()        
-        elif instruction.startswith('PAUSE'):
+        if instruction=="" or instruction.startswith('#'):  return
+       
+        if instruction.startswith('PAUSE'):
             instruction = instruction.split(';')[0].strip()
             parts = instruction.split(' ')
             if len(parts) == 2 and parts[1].isdigit():
@@ -162,56 +158,6 @@ class autopeotic:
             if cmd:
                 self._send_pico(cmd)
             return
-
-        # -------------------------
-        # Legacy aliases -> Pico text protocol
-        # -------------------------
-        if u.startswith("WIRE CUT"):
-            # Pico supports: CUT [reps]
-            self._send_pico("CUT")
-            self.progress = "cutting wire"
-            return
-
-        # Legacy: allow "DISP_SOL CH1 5" -> Pico expects "CH1 DISP_SOL 5"
-        if u.startswith("DISP_SOL "):
-            parts = instruction.split()
-            # DISP_SOL CH1 5
-            if len(parts) == 3 and parts[1].upper().startswith("CH"):
-                self._send_pico(f"{parts[1]} DISP_SOL {parts[2]}")
-                return
-            # If already in some other format, just pass through
-            self._send_pico(instruction)
-            return
-
-        # -------------------------
-        # Peripheral Pico passthrough (the real protocol)
-        # These must match your Pico mode_serial_control.py
-        # -------------------------
-        pico_prefixes = (
-            "INIT",
-            "HOME",        # (Pico side: HOME ALL / CHx HOME)
-            "STATUS",
-            "DEOXIDIZE",
-            "SOLUTION",
-            "FLUSH",
-            "SOLENOID",
-            "FAN",
-            "CUT",
-            "CH",          # CHx ASP/DISP/DISP_SOL/STATUS/HOME/FLUSH/DEOXIDIZE...
-        )
-
-        if u.startswith(pico_prefixes):
-            self._send_pico(instruction)
-            # Optional progress labeling
-            if u.startswith("SOLENOID"):
-                self.progress = "solenoid"
-            elif u.startswith("FLUSH"):
-                self.progress = "flushing"
-            elif u.startswith("FAN"):
-                self.progress = "drying"
-            return
-
-        print(f'ERROR instruction "{instruction}" not recognised in line {self.line}')
 
     def get_spectrum(self):
         return self.spectrum.getSpectrum()
