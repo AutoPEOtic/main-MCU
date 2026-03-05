@@ -79,9 +79,13 @@ with left_col:
         st.info("cutting wire")
     else: st.text("cutting wire")
 
-    if progress == "pumping":
-        st.info("pumping")
-    else: st.text("pumping")
+    if progress == "deoxidizing":
+        st.info("deoxidizing")
+    else: st.text("deoxidizing")
+
+    if progress == "mixing":
+        st.info("mixing")
+    else: st.text("mixing")
 
     if progress == "doing PEO":
         st.info("doing PEO")
@@ -91,10 +95,6 @@ with left_col:
         st.info("flushing")
     else: st.text("flushing")
 
-    if progress == "drying":
-        st.info("drying")
-    else: st.text("drying")
-    
     if progress == "measuring spectrum":
         st.info("measuring spectrum")
     else: st.text("mesuring spectrum")

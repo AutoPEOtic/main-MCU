@@ -3,6 +3,8 @@ from dev.peo import peo_communication
 from dev.spectrometer import spectrometer_communication
 from dev.stepper import stepper_communication
 
+from src.checkpoint import CheckpointManager
+
 import settings.config as config
 
 import subprocess
@@ -16,6 +18,7 @@ class autopeotic:
         self.line = 1
         self.status = False
         self.progress = "not running"
+        self.cp = CheckpointManager("settings/checkpoint_state.json", "settings/checkpoint_events.log")
 
         # PEO defaults (some overwritten later)
         self.Uneg = config.PEO_Uneg
@@ -59,7 +62,9 @@ class autopeotic:
 
 
     def open_instructions(self):
-        return open(os.path.join('settings', 'instructions.txt'), "r")
+        instructions_path = os.path.join("settings", "instructions.txt")
+        self.cp.force_restart_if_not_allowed({"RECONNECT"})
+        self.cp.run(instructions_path, execute_line=self.send_instruction)
 
     # -------------------------
     # Peripheral Pico helpers
@@ -71,8 +76,20 @@ class autopeotic:
         """
         self.peripherals.send_command(cmd)
 
+    def _pico_timeout(self, instruction_upper: str):
+        if instruction_upper.startswith(("HOME", "DEOXIDIZE")):
+            return 180.0
+        if instruction_upper.startswith("SOLUTION"):
+            return 120.0
+        if instruction_upper.startswith("FLUSH"):
+            return 120.0
+        if instruction_upper.startswith("CUT"):
+            return 30.0
+        return 30.0
+        
     def send_instruction(self, instruction: str):
         instruction = instruction.strip()
+        u = instruction.upper()
 
         # Ignore empty/comments early
         if not instruction or instruction.startswith('#'):
@@ -80,10 +97,8 @@ class autopeotic:
 
         # Direct peripheral commands (no prefix)
         if instruction.startswith(("CH", "INIT", "DEOXIDIZE", "SOLENOID", "FLUSH", "SOLUTION", "CUT", "FAN", "STATUS")):
-            self.peripherals.send_command(instruction)
+            self.peripherals.send_command(instruction, reply_timeout_s=self._pico_timeout(u))
             return
-
-        u = instruction.upper()
 
         # -------------------------
         # Meta control
@@ -94,32 +109,37 @@ class autopeotic:
 
         if u.startswith('RECONNECT'):
             self.connect()
+            return
         
         #else: self.sender.send_instruction(self, instruction, self.line)
         #instruction.strip()
 
         if instruction=="" or instruction.startswith('#'):  return
        
-        if instruction.startswith('PAUSE'):
-            instruction = instruction.split(';')[0].strip()
-            parts = instruction.split(' ')
-            if len(parts) == 2 and parts[1].isdigit():
-                _, delay = parts
-                time.sleep(int(delay)/10)
+        if u.startswith('PAUSE'):
+            # allow "PAUSE 010" and ignore trailing ";" comments
+            instruction_clean = instruction.split(';')[0].strip()
+            parts = instruction_clean.split()
+            if len(parts) == 2:
+                try:
+                    delay = float(parts[1]) / 10.0
+                    time.sleep(delay)
+                except Exception:
+                    print(f"Invalid PAUSE value: {instruction}")
             else:
                 print(f"Invalid PAUSE instruction: {instruction}")
-                return
-            try:
-                time.sleep(float(parts[1]) / 10.0)
-            except Exception:
-                print(f"Invalid PAUSE value: {instruction}")
             return
 
         # -------------------------
         # Stepper commands
         # -------------------------
-        if u.startswith(("G1", "G21", "G90", "G91", "M30", "F")):
-            self.stepper.send_instruction(instruction)
+        if u.startswith(("G0", "G1", "G2", "G3")):
+            self.stepper.send_motion(instruction)
+            return
+
+        # Non-motion GRBL commands: just send
+        if u.startswith(("G21", "G90", "G91", "G94", "G54", "M30", "F", "$X")):
+            self.stepper.send_gcode(instruction, wait_idle=False)
             return
 
         if u.startswith("HOME"):

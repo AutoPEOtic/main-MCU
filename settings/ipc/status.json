@@ -1,0 +1,29 @@
+{
+  "state": "IDLE",
+  "program": null,
+  "process": "not running",
+  "iteration": {
+    "i": 2,
+    "n": 3
+  },
+  "params": {
+    "Upos": 100,
+    "PEO_time": 30,
+    "KOH_target": 0.3
+  },
+  "fluid": {
+    "total_ml": 20.0,
+    "ratios": {
+      "H2O": 0.7,
+      "KOH_stock": 0.3
+    },
+    "channels": {
+      "CH1": 0.7,
+      "CH2": 0.3
+    }
+  },
+  "last_event": "Stopped by command",
+  "error": null,
+  "updated_at": 1772731870.1605783,
+  "seen_command_id": 11
+}

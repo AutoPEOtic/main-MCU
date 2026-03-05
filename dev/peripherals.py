@@ -38,7 +38,6 @@ class peripheral_communication:
 
         # Give MCU time to boot and print READY/INIT
         time.sleep(0.5)
-        self._drain_input()
 
     def _open_port(self):
         t0 = time.time()
@@ -81,10 +80,6 @@ class peripheral_communication:
         except Exception:
             pass
         self.serial = None
-
-    def _drain_input(self):
-        # keep your existing implementation
-        pass
     
     def sync(self, timeout_s: float = 10.0) -> None:
         """
