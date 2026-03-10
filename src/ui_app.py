@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 import os
+import re
 import sys
 
 # Ensure project root is importable when running: streamlit run src/ui_app.py
@@ -29,6 +30,47 @@ params = status.get("params", {})
 fluid = status.get("fluid", {})
 last_event = status.get("last_event", "")
 error = status.get("error", None)
+
+# --- run log storage (per UI session) ---
+if "run_log" not in st.session_state:
+    st.session_state["run_log"] = []   # list[dict]
+
+if "program_start_ts" not in st.session_state:
+    st.session_state["program_start_ts"] = None
+
+# Start timer when program enters RUNNING
+if state == "RUNNING" and st.session_state["program_start_ts"] is None:
+    st.session_state["program_start_ts"] = time.time()
+
+# Reset timer + log when program goes IDLE (finished or stopped)
+if state == "IDLE" and st.session_state["program_start_ts"] is not None:
+    st.session_state["program_start_ts"] = None
+    # optional: keep log or clear it:
+    # st.session_state["run_log"] = []
+
+# Helper: format elapsed program time
+def _elapsed_str() -> str:
+    ts = st.session_state["program_start_ts"]
+    if ts is None:
+        return "—"
+    sec = int(time.time() - ts)
+    mm = sec // 60
+    ss = sec % 60
+    return f"{mm:02d}:{ss:02d}"
+
+# Append a log row when we see "Run i/n finished"
+m = re.search(r"Run\s+(\d+)\s*/\s*(\d+)\s+finished", str(last_event))
+if m and st.session_state["program_start_ts"] is not None:
+    run_i = int(m.group(1))
+
+    # avoid duplicates on UI reruns
+    if not any(row.get("run") == run_i for row in st.session_state["run_log"]):
+        st.session_state["run_log"].append({
+            "run": run_i,
+            "Upos": params.get("Upos"),
+            "KOH_target": params.get("KOH_target"),
+            "done_at": _elapsed_str(),   # program working time at completion
+        })
 
 # --- Header ---
 c1, c2, c3 = st.columns([2, 4, 4])
@@ -112,7 +154,10 @@ with b4:
 with b5:
     if st.button("STOP", disabled=not can_stop):
         issue_command("STOP")
-
+can_restart_current = (state == "PAUSED") and int(iteration.get("i", 0)) > 0
+with st.columns(6)[5]: 
+    if st.button("RESTART CURRENT RUN", disabled=not can_restart_current):
+        issue_command("RESTART_CURRENT_RUN")
 st.markdown("---")
 
 # --- Live telemetry (during run) ---
@@ -143,7 +188,7 @@ with t3:
             st.write(f"- **{k}**: {v}")
     else:
         st.write("—")
-        
+
 # --- Program preview BEFORE start ---
 if selected and selected in prog_map:
     p = prog_map[selected]
@@ -207,6 +252,15 @@ if selected and selected in prog_map:
     )
 
 st.markdown("---")
+
+st.markdown("---")
+st.subheader("Run log")
+
+if st.session_state["run_log"]:
+    # optional: show newest first
+    st.table(sorted(st.session_state["run_log"], key=lambda r: r["run"], reverse=True))
+else:
+    st.write("No completed runs yet.")
 
 # Auto-refresh
 time.sleep(0.5)

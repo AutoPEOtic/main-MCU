@@ -9,7 +9,7 @@ from typing import Dict, Any, List, Tuple, Optional
 from src.autopeotic import autopeotic
 from src.ipc import IPCPaths, read_json, atomic_write_json, default_status, default_control
 from settings.programs import programs_by_name, Program
-
+from src.checkpoint import CheckpointManager
 
 CHECKPOINT_STATE = "settings/checkpoint_state.json"
 CHECKPOINT_LOG = "settings/checkpoint_events.log"
@@ -19,8 +19,10 @@ class Runner:
     def __init__(self, ipc: IPCPaths):
         self.ipc = ipc
         self.ap = autopeotic()
-
+        self.restart_current_run_requested = False
+        self.failed_run_idx = None
         self.state = "IDLE"  # IDLE/RUNNING/PAUSED/ERROR
+        self.resume_run_idx: Optional[int] = None
         self.program: Optional[Program] = None
 
         self.stop_requested = False
@@ -41,6 +43,17 @@ class Runner:
 
         self.publish_status(process="not running")
 
+        # --- IMPORTANT: do not replay old UI commands after runner restart ---
+        ctrl = self.read_control()
+        self.last_seen_command_id = int(ctrl.get("command_id", 0))
+        # Optional safety: if the last command is START/RESTART, clear it so it won't be reused by other tools
+        atomic_write_json(self.ipc.control_path, {
+            "command": "NONE",
+            "program": None,
+            "issued_at": time.time(),
+            "command_id": self.last_seen_command_id,
+        })
+
     # ---------- checkpoint reset ----------
     def reset_checkpoints(self) -> None:
         for p in [CHECKPOINT_STATE, CHECKPOINT_LOG]:
@@ -52,7 +65,7 @@ class Runner:
         self.ap = autopeotic()
 
     # ---------- mixing math (2-channel) ----------
-    def compute_two_channel_recipe(self, prog: Program, target: float) -> Tuple[Dict[str, float], Dict[str, float]]:
+    def compute_two_channel_recipe(self, prog: Program, target: float):
         c1 = prog.water_conc
         c2 = prog.koh_stock_conc
         if abs(c2 - c1) < 1e-9:
@@ -86,7 +99,7 @@ class Runner:
         atomic_write_json(self.ipc.status_path, st)
 
     # ---------- Command handling ----------
-    def handle_command(self, ctrl: Dict[str, Any]) -> None:
+    def handle_command(self, ctrl: Dict[str, Any]):
         cmd_id = int(ctrl.get("command_id", 0))
         if cmd_id <= self.last_seen_command_id:
             return
@@ -104,15 +117,19 @@ class Runner:
             self.pause_requested = False
             self.restart_requested = False
             self.restart_program_name = None
-            self.last_event = "STOP accepted (will interrupt as soon as possible)"
-            self.publish_status()
+            self.restart_current_run_requested = False
+            self.last_event = "STOP accepted"
+            self.publish_status(process="stopping")
             return
 
         if cmd == "PAUSE":
             if self.state == "RUNNING":
                 self.pause_requested = True
                 self.state = "PAUSED"
-                self.last_event = "PAUSE accepted"
+                if self.current_i > 0:
+                    self.failed_run_idx = self.current_i
+                    self.resume_run_idx = self.current_i
+                self.last_event = f"PAUSE accepted (run {self.current_i})"
             else:
                 self.last_event = f"PAUSE rejected (state={self.state})"
             self.publish_status()
@@ -121,6 +138,7 @@ class Runner:
         if cmd == "CONTINUE":
             if self.state == "PAUSED":
                 self.pause_requested = False
+                self.resume_run_idx = self.failed_run_idx or self.current_i or 1
                 self.state = "RUNNING"
                 self.last_event = "CONTINUE accepted"
             else:
@@ -165,6 +183,21 @@ class Runner:
             self.publish_status(process="restarting")
             return
 
+        if cmd == "RESTART_CURRENT_RUN":
+            run_i = self.resume_run_idx or self.failed_run_idx or self.current_i
+            if run_i and run_i > 0:
+                self._delete_run_checkpoints(run_i)
+                self.restart_current_run_requested = True
+                self.pause_requested = False
+                self.stop_requested = False
+                self.resume_run_idx = run_i
+                self.last_event = f"RESTART_CURRENT_RUN accepted (run {run_i})"
+                self.publish_status(process="restarting current run", error=None)
+            else:
+                self.last_event = "RESTART_CURRENT_RUN rejected (no current run)"
+                self.publish_status()
+            return
+
         if cmd not in ("NONE", ""):
             self.last_event = f"Unknown command: {cmd}"
             self.publish_status(error=self.last_event)
@@ -186,6 +219,7 @@ class Runner:
     def execute_line(self, line: str, run_ctx: Dict[str, Any]) -> None:
         # IMPORTANT: poll commands before each instruction line
         self._poll_commands()
+
 
         # STOP / RESTART interrupt as soon as we can
         if self.stop_requested:
@@ -223,6 +257,8 @@ class Runner:
             self.publish_status(process="reconnecting")
         elif u.startswith("SOLENOID"):
             self.publish_status(process="actuating solenoid")
+        elif u.startswith("DEOXIDIZE"):
+            self.publish_status(process="deoxidizing")
 
         # Rewrite SOLUTION dynamically
         if u.startswith("SOLUTION"):
@@ -243,26 +279,75 @@ class Runner:
     def loop(self) -> None:
         while True:
             try:
-                # poll commands in idle loop
                 self._poll_commands()
 
-                # if restart requested while idle (STOP already set), handle it here
+                # STOP from PAUSED/IDLE should be handled here
+                if self.stop_requested and self.state != "RUNNING":
+                    self._do_stop()
+                    time.sleep(0.2)
+                    continue
+
+                # Whole-program restart
                 if self.restart_requested:
                     self._do_restart()
                     continue
 
+                # Restart the currently paused/failed run
+                if self.restart_current_run_requested and self.state == "PAUSED" and self.program is not None:
+                    run_i = self.resume_run_idx or self.failed_run_idx or self.current_i
+                    if run_i and run_i > 0:
+                        self.restart_current_run_requested = False
+                        self.pause_requested = False
+                        self.failed_run_idx = None
+                        self.state = "RUNNING"
+                        self.resume_run_idx = run_i
+                        self.last_event = f"Restarting current run {run_i}"
+                        self.publish_status(process="restarting current run", error=None)
+                        continue
+                    else:
+                        self.restart_current_run_requested = False
+                        self.last_event = "RESTART_CURRENT_RUN rejected (no run to restart)"
+                        self.publish_status()
+                        time.sleep(0.2)
+                        continue
+
                 if self.state != "RUNNING" or self.program is None:
                     time.sleep(0.2)
                     continue
-
                 prog = self.program
                 runs = self.build_runs(prog)
                 self.total_n = len(runs)
-                self.current_i = 0
+
+                if not runs:
+                    self.last_event = "Program has no runs"
+                    self.state = "IDLE"
+                    self.program = None
+                    self.publish_status(process="not running", error=self.last_event)
+                    time.sleep(0.2)
+                    continue
+
+                start_idx = self.resume_run_idx or 1
+                if start_idx < 1:
+                    start_idx = 1
+                if start_idx > len(runs):
+                    start_idx = len(runs)
+
+                self.current_i = start_idx - 1
+                self.resume_run_idx = None
                 self.publish_status(process="running")
 
-                for idx, r in enumerate(runs, start=1):
+                for idx in range(start_idx, len(runs) + 1):
+                    r = runs[idx - 1]
                     self._poll_commands()
+
+                    if self.stop_requested and self.state != "RUNNING":
+                        self._do_stop()
+                        time.sleep(0.2)
+                        continue
+
+                    if self.restart_requested and self.state != "RUNNING":
+                        self._do_restart()
+                        continue
 
                     if self.restart_requested:
                         raise RuntimeError("RESTART requested")
@@ -294,6 +379,8 @@ class Runner:
                     self.last_event = f"Run {idx}/{self.total_n} started"
                     self.publish_status()
 
+                    self._set_run_checkpoints(idx)
+            
                     self.ap.cp.force_restart_if_not_allowed({"RECONNECT"})
                     self.ap.cp.run(prog.instructions_path, execute_line=lambda ln: self.execute_line(ln, run_ctx))
 
@@ -308,24 +395,34 @@ class Runner:
                 self.stop_requested = False
                 self.pause_requested = False
                 self.publish_status(process="not running")
+                self.failed_run_idx = None
+                self.resume_run_idx = None
+                self.restart_current_run_requested = False
 
             except Exception as e:
                 msg = f"{type(e).__name__}: {e}"
 
-                # RESTART path
+                # 1) STOP should not be treated as "failed run"
+                if "STOP requested" in msg:
+                    self._do_stop()
+                    continue
+
+                # 2) Program RESTART should not be treated as "failed run"
                 if "RESTART requested" in msg or self.restart_requested:
                     self.publish_status(process="restarting", error=None)
                     self._do_restart()
                     continue
 
-                # STOP path
-                if "STOP requested" in msg:
-                    self.last_event = "Stopped by command"
-                    self.state = "IDLE"
-                    self.program = None
-                    self.stop_requested = False
-                    self.pause_requested = False
-                    self.publish_status(process="not running")
+                # If we are in the middle of a run, pause and allow manual restart-current-run
+                if self.state in ("RUNNING", "PAUSED") and self.program is not None and self.current_i > 0:
+                    self.failed_run_idx = self.current_i
+                    self.resume_run_idx = self.current_i
+                    self.state = "PAUSED"
+                    self.pause_requested = True
+                    self.stop_requested = False  # stop only aborted the current cp.run
+                    msg = f"{type(e).__name__}: {e}"
+                    self.last_event = f"Run {self.current_i}/{self.total_n} failed (paused)"
+                    self.publish_status(process="paused", error=msg)
                     continue
 
                 # ERROR path
@@ -342,6 +439,21 @@ class Runner:
                 self.publish_status(process="not running", error=msg)
                 time.sleep(0.5)
 
+    def _do_stop(self) -> None:
+        self.last_event = "Stopped by command"
+        self.state = "IDLE"
+        self.program = None
+        self.stop_requested = False
+        self.pause_requested = False
+        self.restart_requested = False
+        self.restart_program_name = None
+        self.restart_current_run_requested = False
+        self.failed_run_idx = None
+        self.resume_run_idx = None
+        self.current_i = 0
+        self.total_n = 0
+        self.publish_status(process="not running", error=None)
+    
     def _do_restart(self) -> None:
         # Clear running state
         name = self.restart_program_name
@@ -349,6 +461,12 @@ class Runner:
         self.restart_program_name = None
         self.stop_requested = False
         self.pause_requested = False
+
+        self.restart_current_run_requested = False
+        self.failed_run_idx = None
+        self.resume_run_idx = 1
+        self.current_i = 0
+        self.total_n = 0
 
         if not name:
             self.last_event = "RESTART failed: no program name"
@@ -371,6 +489,21 @@ class Runner:
         self.publish_status(process="restarting")
         self.reset_checkpoints()
 
+    def _set_run_checkpoints(self, run_idx: int) -> None:
+        os.makedirs("settings/checkpoints", exist_ok=True)
+        state_path = f"settings/checkpoints/run_{run_idx:03d}_state.json"
+        log_path = f"settings/checkpoints/run_{run_idx:03d}_events.log"
+        self.ap.cp = CheckpointManager(state_path, log_path)
+
+    def _delete_run_checkpoints(self, run_idx: int) -> None:
+        state_path = f"settings/checkpoints/run_{run_idx:03d}_state.json"
+        log_path = f"settings/checkpoints/run_{run_idx:03d}_events.log"
+        for p in (state_path, log_path):
+            try:
+                os.remove(p)
+            except FileNotFoundError:
+                pass
+    
 
 if __name__ == "__main__":
     Runner(IPCPaths()).loop()
