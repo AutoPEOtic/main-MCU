@@ -1,0 +1,10 @@
+{"ts": 1773330474.060463, "layer": "device_manager", "device": "all", "command": "STARTUP_ALL", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773330480.1328611, "layer": "device_manager", "device": "all", "command": "STARTUP_ALL", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1773330480.1330206, "layer": "worker", "device": "peripheral", "command": "STATUS", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773330480.1351185, "layer": "worker", "device": "peripheral", "command": "STATUS", "result": "OK", "detail": "OK STATUS CH1:19.000ml CH2:19.000ml", "extra": {}}
+{"ts": 1773330480.1352584, "layer": "worker", "device": "motion", "command": "$X", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773330480.138115, "layer": "worker", "device": "motion", "command": "$X", "result": "OK", "detail": "config accepted", "extra": {}}
+{"ts": 1773330480.1382062, "layer": "worker", "device": "peo", "command": "PEO OFF", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773330483.1398757, "layer": "worker", "device": "peo", "command": "PEO OFF", "result": "OK", "detail": "off completed", "extra": {}}
+{"ts": 1773330483.140093, "layer": "device_manager", "device": "all", "command": "SHUTDOWN_ALL", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773330483.142733, "layer": "device_manager", "device": "all", "command": "SHUTDOWN_ALL", "result": "OK", "detail": "", "extra": {}}
