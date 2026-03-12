@@ -30,14 +30,38 @@ class peripheral_communication:
     """
 
     def __init__(self, port: str, baudrate: int, timeout_s: float = 1.0):
-        self.port = port                  
+        self.port = port
         self.baudrate = baudrate
         self.timeout_s = timeout_s
         self.serial = self._open_port()
+
+        # Let USB CDC / MCU settle a bit before first handshake
+        time.sleep(0.5)
+
         self.sync(timeout_s=10.0)
 
-        # Give MCU time to boot and print READY/INIT
+        # Post-sync stabilization:
+        # sometimes the first successful OK does not mean the line is fully quiet yet
         time.sleep(0.5)
+
+        try:
+            self.serial.reset_input_buffer()
+            self.serial.reset_output_buffer()
+        except Exception:
+            pass
+
+        time.sleep(0.2)
+
+        # One more cheap sanity ping after buffers were cleared
+        self.send_command("STATUS", reply_timeout_s=5.0)
+
+        # Final tiny settle
+        time.sleep(0.2)
+
+        try:
+            self.serial.reset_input_buffer()
+        except Exception:
+            pass
 
     def _open_port(self):
         t0 = time.time()

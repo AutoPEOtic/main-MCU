@@ -14,6 +14,11 @@ from src.database import database
 
 class autopeotic:
     def __init__(self):
+        self.peripherals = None
+        self.stepper = None
+        self.spectrum = None
+        self.peo = None
+
         self.connect()
         self.line = 1
         self.status = False
@@ -31,9 +36,29 @@ class autopeotic:
         self.Upos = 0
         self.KOH_concentration = 0
         self.PEO_time = 0
+    
+    def _safe_close(self, obj, name: str):
+        if obj is None:
+            return
+        try:
+            if hasattr(obj, "close"):
+                print(f"[RECONNECT] Closing {name}")
+                obj.close()
+        except Exception as e:
+            print(f"[RECONNECT] Failed to close {name}: {e}")
 
     def connect(self):
-        print("Reconnecting all devices")
+        print("[RECONNECT] Reconnecting all devices")
+
+        # 1) Explicitly close old handles first
+        self._safe_close(getattr(self, "peripherals", None), "peripherals")
+        self._safe_close(getattr(self, "stepper", None), "stepper")
+        self._safe_close(getattr(self, "spectrum", None), "spectrum")
+        self._safe_close(getattr(self, "peo", None), "peo")
+
+        # Optional: small delay so Linux finishes releasing descriptors
+        time.sleep(0.5)
+
         subprocess.run(['sudo', 'uhubctl', '-a', 'cycle', '-l', '1'])
         subprocess.run(['sudo', 'uhubctl', '-a', 'cycle', '-l', '2'])
         subprocess.run(['sudo', 'uhubctl', '-a', 'cycle', '-l', '3'])
@@ -45,7 +70,6 @@ class autopeotic:
             baudrate=config.peripheral_pico_baudrate,
             timeout_s=1.0
         )
-        self.peripherals.send_command("STATUS")
 
         self.stepper = stepper_communication(config.stepper_description, config.stepper_baudrate)
         self.spectrum = spectrometer_communication(config.spectroscope_description, config.spectroscope_baudrate)
@@ -56,9 +80,20 @@ class autopeotic:
             config.PEO_Multiplier
         )
 
-        time.sleep(5)
+        time.sleep(1)
+
+        # 5) Peripheral sanity check after stabilization
+        try:
+            self.peripherals.send_command("STATUS")
+            time.sleep(0.2)
+        except Exception as e:
+            print(f"[RECONNECT] STATUS after reconnect failed: {e}")
+            raise
+
+        # 6) Final settle time
+        time.sleep(1.0)
+
         self.autopeotic_db = database()
-        #self.sender = sender(self.peripherals, self.stepper, self.spectrum, self.peo)
 
 
     def open_instructions(self):

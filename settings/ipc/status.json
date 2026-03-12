@@ -1,7 +1,7 @@
 {
   "state": "PAUSED",
   "program": "KOH_scan_small",
-  "process": "moving",
+  "process": "paused",
   "iteration": {
     "i": 1,
     "n": 3
@@ -22,8 +22,8 @@
       "CH2": 0.1
     }
   },
-  "last_event": "RESTART_CURRENT_RUN accepted (run 1)",
-  "error": null,
-  "updated_at": 1772817026.7536745,
-  "seen_command_id": 76
+  "last_event": "Run 1/3 failed (paused)",
+  "error": "SerialException: write failed: [Errno 5] Input/output error",
+  "updated_at": 1773325297.410866,
+  "seen_command_id": 157
 }

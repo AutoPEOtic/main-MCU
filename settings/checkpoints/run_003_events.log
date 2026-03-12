@@ -26,3 +26,7 @@
 2026-03-06T15:26:03.421211+00:00	elapsed=367.632s	event=checkpoint_start	checkpoint=DONE
 2026-03-06T15:26:03.429243+00:00	elapsed=367.64s	event=checkpoint_done_eof	checkpoint=DONE
 2026-03-06T15:26:03.429312+00:00	elapsed=367.64s	event=run_end	checkpoint=DONE
+2026-03-12T13:09:42.586471+00:00	elapsed=0.001s	event=forced_restart	checkpoint=DONE	extra=allowed=['RECONNECT']
+2026-03-12T13:09:42.588703+00:00	elapsed=0.003s	event=state_cleared	checkpoint=-
+2026-03-12T13:09:42.588883+00:00	elapsed=0.003s	event=run_start	checkpoint=-	extra=resume_index=0
+2026-03-12T13:09:43.668660+00:00	elapsed=1.083s	event=error	checkpoint=-	extra=ERR UNKNOWN_CMD "aHOME ALL"

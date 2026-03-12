@@ -65,3 +65,11 @@ class peo_communication():
     def off(self):
         print('Sending: PEO OFF')
         self.serial.write_coil(1, True, slave=20)
+
+    def close(self):
+        try:
+            if getattr(self, "serial", None):
+                self.serial.close()
+        except Exception:
+            pass
+        self.serial = None

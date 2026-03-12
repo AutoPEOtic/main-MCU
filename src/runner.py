@@ -14,6 +14,14 @@ from src.checkpoint import CheckpointManager
 CHECKPOINT_STATE = "settings/checkpoint_state.json"
 CHECKPOINT_LOG = "settings/checkpoint_events.log"
 
+class RestartCurrentRunRequested(Exception):
+    pass
+
+class StopRequested(Exception):
+    pass
+
+class ProgramRestartRequested(Exception):
+    pass
 
 class Runner:
     def __init__(self, ipc: IPCPaths):
@@ -182,15 +190,19 @@ class Runner:
             self.last_event = f"RESTART accepted (program={prog_name})"
             self.publish_status(process="restarting")
             return
-
+            
         if cmd == "RESTART_CURRENT_RUN":
             run_i = self.resume_run_idx or self.failed_run_idx or self.current_i
             if run_i and run_i > 0:
                 self._delete_run_checkpoints(run_i)
                 self.restart_current_run_requested = True
-                self.pause_requested = False
+
+                # KEEP pause active until the live cp.run is explicitly aborted
+                self.pause_requested = True
                 self.stop_requested = False
                 self.resume_run_idx = run_i
+                self.state = "PAUSED"
+
                 self.last_event = f"RESTART_CURRENT_RUN accepted (run {run_i})"
                 self.publish_status(process="restarting current run", error=None)
             else:
@@ -231,8 +243,12 @@ class Runner:
             self.publish_status(process="paused")
             time.sleep(0.2)
             self._poll_commands()
+
             if self.stop_requested:
                 raise RuntimeError("STOP requested")
+
+            if self.restart_current_run_requested:
+                raise RestartCurrentRunRequested(f"Restart current run requested (run {self.current_i})")
 
         stripped = line.strip()
         if not stripped or stripped.startswith("#"):
@@ -401,6 +417,26 @@ class Runner:
 
             except Exception as e:
                 msg = f"{type(e).__name__}: {e}"
+
+                if isinstance(e, RestartCurrentRunRequested):
+                    run_i = self.resume_run_idx or self.failed_run_idx or self.current_i
+
+                    self.restart_current_run_requested = False
+                    self.pause_requested = False
+                    self.stop_requested = False
+                    self.failed_run_idx = None
+
+                    if run_i and run_i > 0:
+                        self.last_event = f"Reconnecting before restarting current run {run_i}"
+                        self.publish_status(process="reconnecting", error=None)
+
+                        self.ap.connect()   # yes, full reconnect for now
+
+                        self.state = "RUNNING"
+                        self.resume_run_idx = run_i
+                        self.last_event = f"Restarting current run {run_i}"
+                        self.publish_status(process="restarting current run", error=None)
+                        continue
 
                 # 1) STOP should not be treated as "failed run"
                 if "STOP requested" in msg:

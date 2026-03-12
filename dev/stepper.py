@@ -51,6 +51,14 @@ class stepper_communication:
                 time.sleep(0.01)
         return out
 
+    def close(self):
+        try:
+            if getattr(self, "serial", None):
+                self.serial.close()
+        except Exception:
+            pass
+        self.serial = None
+
     def _wait_for_ok(self, timeout_s: float = 3.0):
         """
         Wait until GRBL replies 'ok' or 'error:' for the last command.

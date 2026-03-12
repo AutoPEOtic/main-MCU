@@ -1,6 +1,6 @@
 {
-  "command": "STOP",
-  "program": null,
-  "issued_at": 1772817052.2690701,
-  "command_id": 77
+  "command": "START",
+  "program": "KOH_scan_small",
+  "issued_at": 1773325202.666714,
+  "command_id": 157
 }

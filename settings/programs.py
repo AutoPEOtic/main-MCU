@@ -52,6 +52,18 @@ def list_programs() -> List[Program]:
             water_conc=0.0,
             koh_stock_conc=1.0,
         ),
+        Program(
+            name="One run test",
+            instructions_path="settings/instructions.txt",
+            Upos_values=[100],
+            PEO_time_values=[30],
+            KOH_targets=[0],
+            total_ml=20.0,
+            water_channel="CH1",
+            koh_stock_channel="CH2",
+            water_conc=0.0,
+            koh_stock_conc=1.0,
+        ),
     ]
 
 

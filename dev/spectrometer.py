@@ -27,5 +27,12 @@ class spectrometer_communication():
         print('Sending: GET SPECTRUM')
         return spectrum
 
+    def close(self):
+        try:
+            if getattr(self, "serial", None):
+                self.serial.close()
+        except Exception:
+            pass
+        self.serial = None
 
 
