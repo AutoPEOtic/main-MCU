@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 
 class DeviceName(str, Enum):
@@ -56,7 +56,7 @@ class RunContext:
 
 @dataclass
 class CommandResult:
-    device: DeviceName
+    device: Union[DeviceName, str]
     command: str
     code: ResultCode
     detail: str = ""

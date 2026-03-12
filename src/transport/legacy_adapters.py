@@ -87,6 +87,15 @@ class LegacyMotionAdapter:
                 self.cfg.stepper_description,
                 self.cfg.stepper_baudrate,
             )
+
+            ser = getattr(self.dev, "serial", None)
+            if ser is not None:
+                try:
+                    ser.reset_input_buffer()
+                    ser.reset_output_buffer()
+                except Exception:
+                    pass
+
         except Exception as exc:
             raise TransportError(f"Failed to open motion device: {exc}") from exc
 

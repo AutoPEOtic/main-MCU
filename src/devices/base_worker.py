@@ -13,6 +13,7 @@ from src.core.models import CommandResult, DeviceHealth, DeviceName, DeviceSnaps
 class WorkerStatus:
     current_command: Optional[str] = None
     cancel_requested: bool = False
+    last_result: Optional[str] = None
 
 
 class BaseWorker:
@@ -59,6 +60,7 @@ class BaseWorker:
     def _finish_command(self, result: CommandResult) -> CommandResult:
         with self._lock:
             self._status.current_command = None
+            self._status.last_result = result.code.value
             self.logger.info(
                 "worker",
                 self.name.value,
@@ -78,7 +80,7 @@ class BaseWorker:
             health=self.health,
             detail=self.detail,
             last_command=self._status.current_command,
-            last_result=None,
+            last_result=self._status.last_result,
         )
 
     def execute(self, *args, **kwargs) -> CommandResult:
