@@ -26,6 +26,11 @@ class ResultCode(str, Enum):
     TIMEOUT = "TIMEOUT"
     REJECTED = "REJECTED"
 
+class DeviceTrust(str, Enum):
+    TRUSTED = "TRUSTED"
+    DEGRADED = "DEGRADED"
+    UNTRUSTED = "UNTRUSTED"
+
 
 @dataclass(frozen=True)
 class ProgramDefinition:
@@ -56,18 +61,21 @@ class RunContext:
 
 @dataclass
 class CommandResult:
-    device: Union[DeviceName, str]
+    device: Any
     command: str
     code: ResultCode
     detail: str = ""
     raw_lines: List[str] = field(default_factory=list)
     payload: Optional[Any] = None
+    failure_class: Optional[str] = None
+    resume_safe: bool = True
 
 
 @dataclass
 class DeviceSnapshot:
     name: DeviceName
     health: DeviceHealth
+    trust: DeviceTrust
     detail: str = ""
     last_command: Optional[str] = None
     last_result: Optional[str] = None

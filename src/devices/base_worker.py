@@ -6,7 +6,7 @@ from typing import Optional
 
 from src.core.errors import DeviceUnhealthyError
 from src.core.logging_utils import EventLogger
-from src.core.models import CommandResult, DeviceHealth, DeviceName, DeviceSnapshot, ResultCode
+from src.core.models import CommandResult, DeviceHealth, DeviceName, DeviceSnapshot, DeviceTrust, ResultCode
 
 
 @dataclass
@@ -24,6 +24,7 @@ class BaseWorker:
         self.detail = ""
         self._status = WorkerStatus()
         self._lock = threading.RLock()
+        self.trust = DeviceTrust.TRUSTED
 
     def open(self) -> None:
         raise NotImplementedError
@@ -38,6 +39,9 @@ class BaseWorker:
             self.open()
             self.healthcheck()
             self.logger.info("worker", self.name.value, "RECONNECT", "OK")
+
+    def _set_trust(self, trust: DeviceTrust) -> None:
+        self.trust = trust
 
     def healthcheck(self) -> None:
         raise NotImplementedError
@@ -78,6 +82,7 @@ class BaseWorker:
         return DeviceSnapshot(
             name=self.name,
             health=self.health,
+            trust=self.trust,
             detail=self.detail,
             last_command=self._status.current_command,
             last_result=self._status.last_result,

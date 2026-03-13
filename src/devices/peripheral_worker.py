@@ -5,6 +5,8 @@ from src.core.logging_utils import EventLogger
 from src.core.models import CommandResult, DeviceHealth, DeviceName, ResultCode
 from src.devices.base_worker import BaseWorker
 from src.transport.legacy_adapters import LegacyPeripheralAdapter
+from src.core.recovery_policy import FailureClass
+from src.core.models import DeviceTrust
 
 
 class PeripheralWorker(BaseWorker):
@@ -47,13 +49,25 @@ class PeripheralWorker(BaseWorker):
                 )
             )
         except (TransportError, DeviceProcessError) as exc:
-            self._set_health(DeviceHealth.UNHEALTHY, str(exc))
+            detail = str(exc)
+            self._set_health(DeviceHealth.UNHEALTHY, detail)
+
+            upper = cmd.upper()
+            if upper.startswith("HOME ALL") and "hom" in detail.lower():
+                self._set_trust(DeviceTrust.DEGRADED)
+                failure_class = FailureClass.DEVICE_PROCESS.value
+            else:
+                self._set_trust(DeviceTrust.UNTRUSTED)
+                failure_class = FailureClass.TRANSPORT.value
+
             return self._finish_command(
                 CommandResult(
                     device=self.name,
                     command=cmd,
                     code=ResultCode.ERROR,
-                    detail=str(exc),
+                    detail=detail,
+                    failure_class=failure_class,
+                    resume_safe=False,
                 )
             )
 

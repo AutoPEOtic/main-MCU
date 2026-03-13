@@ -5,6 +5,8 @@ from src.core.logging_utils import EventLogger
 from src.core.models import CommandResult, DeviceHealth, DeviceName, ResultCode
 from src.devices.base_worker import BaseWorker
 from src.transport.legacy_adapters import LegacyMotionAdapter
+from src.core.recovery_policy import FailureClass
+from src.core.models import DeviceTrust
 
 
 class MotionWorker(BaseWorker):
@@ -47,12 +49,15 @@ class MotionWorker(BaseWorker):
             )
         except (TransportError, DeviceProcessError) as exc:
             self._set_health(DeviceHealth.UNHEALTHY, str(exc))
+            self._set_trust(DeviceTrust.UNTRUSTED)
             return self._finish_command(
                 CommandResult(
                     device=self.name,
                     command=cmd,
                     code=ResultCode.ERROR,
                     detail=str(exc),
+                    failure_class=FailureClass.MOTION_POSE_UNCERTAIN.value,
+                    resume_safe=False,
                 )
             )
 

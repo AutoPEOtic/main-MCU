@@ -12,6 +12,8 @@ from src.engine.checkpoint_store import CheckpointStore
 from src.engine.experiment_engine import EngineRunResult, ExperimentEngine
 from src.engine.run_plan import as_run_context, build_run_plan
 from src.supervisor.state_machine import StateMachine, SupervisorState
+from src.core.recovery_policy import FailureClass, RecoveryAction, RecoveryDecision
+from src.core.models import DeviceName
 
 
 class Supervisor:
@@ -39,6 +41,8 @@ class Supervisor:
         checkpoint_store: CheckpointStore,
         logger: EventLogger,
     ) -> None:
+        self._run_retry_counts: Dict[int, int] = {}
+
         self.device_manager = device_manager
         self.engine = engine
         self.checkpoint_store = checkpoint_store
@@ -74,7 +78,7 @@ class Supervisor:
             runs = build_run_plan(program)
             if not runs:
                 raise ValidationError("Program produced zero runs")
-
+            self._run_retry_counts = {}
             self._program = program
             self._runs = runs
             self._current_run_index = 0
@@ -213,6 +217,7 @@ class Supervisor:
             self.clear_control_flags()
             self.state_machine.transition(SupervisorState.RUNNING)
             self._last_event = "Experiment started"
+            self._last_error = ""
             program = self._program
             total_runs = len(self._runs)
 
@@ -263,6 +268,8 @@ class Supervisor:
                 )
 
                 if result.ok:
+                    self._clear_run_retry(ctx.run_index)
+
                     self.logger.info(
                         "supervisor",
                         "runtime",
@@ -273,61 +280,215 @@ class Supervisor:
                     )
 
                     with self._lock:
+                        self._last_error = ""
                         self._last_event = f"Run {ctx.run_index}/{ctx.total_runs} finished"
+
                         if self._restart_program_requested:
+                            self._restart_program_requested = False
                             run_idx = 0
                             self._current_run_index = 0
-                            self._restart_program_requested = False
+                            self._run_retry_counts = {}
                             self._last_event = "Restarting full program"
                             continue
 
                         if self._restart_run_requested:
                             self._restart_run_requested = False
+                            self.checkpoint_store.clear(ctx)
+                            self._clear_run_retry(ctx.run_index)
                             self._last_event = "Restarting current run"
                             continue
 
                     run_idx += 1
                     continue
 
-                # result not ok
+                # ------------------------------
+                # run failed -> policy handling
+                # ------------------------------
                 with self._lock:
                     self._last_error = result.error_text or "Run failed"
                     self._last_event = f"Run {ctx.run_index}/{ctx.total_runs} failed"
 
                     if self._stop_requested:
                         self.state_machine.transition(SupervisorState.STOPPING)
+                        self._last_event = "Stopping experiment after failure"
                         break
 
                     if self._restart_program_requested:
                         self._restart_program_requested = False
                         run_idx = 0
                         self._current_run_index = 0
+                        self._run_retry_counts = {}
+                        self._last_error = ""
                         self._last_event = "Restarting full program after failure"
-                        try:
-                            self.state_machine.transition(SupervisorState.RUNNING)
-                        except Exception:
-                            pass
                         continue
 
                     if self._restart_run_requested:
                         self._restart_run_requested = False
+                        self.checkpoint_store.clear(ctx)
+                        self._clear_run_retry(ctx.run_index)
+                        self._last_error = ""
                         self._last_event = "Restarting current run after failure"
-                        try:
-                            self.state_machine.transition(SupervisorState.RUNNING)
-                        except Exception:
-                            pass
                         continue
 
-                    self.state_machine.transition(SupervisorState.ERROR)
+                decision = self._decide_recovery(result)
+                attempt = self._increment_run_retry(ctx.run_index)
+
+                self.logger.info(
+                    "supervisor",
+                    "runtime",
+                    "RECOVERY_DECISION",
+                    decision.action.value,
+                    run_index=ctx.run_index,
+                    total_runs=ctx.total_runs,
+                    attempt=attempt,
+                    max_retries=decision.max_retries,
+                    detail=decision.detail,
+                )
+
+                if decision.max_retries > 0 and attempt > decision.max_retries:
+                    with self._lock:
+                        self._last_error = (
+                            f"{decision.detail}; exceeded retry limit "
+                            f"({decision.max_retries})"
+                        )
+                        self._last_event = (
+                            f"Run {ctx.run_index}/{ctx.total_runs} exceeded retry limit"
+                        )
+                        self.state_machine.transition(SupervisorState.ERROR)
+
+                    self.logger.error(
+                        "supervisor",
+                        "runtime",
+                        "RECOVERY_LIMIT_EXCEEDED",
+                        detail=self._last_error,
+                        run_index=ctx.run_index,
+                        total_runs=ctx.total_runs,
+                        attempt=attempt,
+                    )
+                    return
+
+                try:
+                    if decision.reconnect_motion:
+                        self.device_manager.recover_motion_basic()
+
+                    if decision.reconnect_peripheral:
+                        self.device_manager.recover_peripheral_basic(
+                            do_home_all=decision.require_peripheral_home_all
+                        )
+
+                    if decision.reconnect_peo:
+                        self.device_manager.reconnect_device(DeviceName.PEO)
+                        self.device_manager.healthcheck_device(DeviceName.PEO)
+
+                    if decision.reconnect_spectrometer:
+                        self.device_manager.reconnect_device(DeviceName.SPECTROMETER)
+                        self.device_manager.healthcheck_device(DeviceName.SPECTROMETER)
+
+                except Exception as recovery_exc:
+                    with self._lock:
+                        self._last_error = f"Recovery failed: {recovery_exc}"
+                        self._last_event = (
+                            f"Recovery failed for run {ctx.run_index}/{ctx.total_runs}"
+                        )
+                        self.state_machine.transition(SupervisorState.ERROR)
+
+                    self.logger.error(
+                        "supervisor",
+                        "runtime",
+                        "RECOVERY_FAILED",
+                        detail=str(recovery_exc),
+                        run_index=ctx.run_index,
+                        total_runs=ctx.total_runs,
+                        attempt=attempt,
+                    )
+                    return
+
+                if decision.action == RecoveryAction.RESTART_RUN:
+                    if decision.clear_current_run_checkpoint:
+                        self.checkpoint_store.clear(ctx)
+
+                    with self._lock:
+                        self._last_error = ""
+                        self._last_event = f"Restarting run {ctx.run_index}/{ctx.total_runs}"
+
+                    self.logger.info(
+                        "supervisor",
+                        "runtime",
+                        "RESTART_RUN",
+                        "OK",
+                        run_index=ctx.run_index,
+                        total_runs=ctx.total_runs,
+                        attempt=attempt,
+                    )
+                    continue
+
+                if decision.action in (
+                    RecoveryAction.RETRY_STEP,
+                    RecoveryAction.RECONNECT_AND_CONTINUE,
+                ):
+                    with self._lock:
+                        self._last_error = ""
+                        self._last_event = (
+                            f"Recovering and continuing run {ctx.run_index}/{ctx.total_runs}"
+                        )
+
+                    self.logger.info(
+                        "supervisor",
+                        "runtime",
+                        "CONTINUE_AFTER_RECOVERY",
+                        "OK",
+                        run_index=ctx.run_index,
+                        total_runs=ctx.total_runs,
+                        attempt=attempt,
+                    )
+                    continue
+
+                if decision.action in (
+                    RecoveryAction.MANUAL_INTERVENTION,
+                    RecoveryAction.STOP,
+                    RecoveryAction.RESTART_PROGRAM,
+                ):
+                    with self._lock:
+                        if decision.action == RecoveryAction.RESTART_PROGRAM:
+                            self._last_error = ""
+                            self._last_event = "Restarting full program by recovery policy"
+                            self._run_retry_counts = {}
+                            run_idx = 0
+                            self._current_run_index = 0
+                            continue
+
+                        self._last_error = decision.detail or (result.error_text or "Run failed")
+                        self._last_event = (
+                            f"Run {ctx.run_index}/{ctx.total_runs} requires manual intervention"
+                        )
+                        self.state_machine.transition(SupervisorState.ERROR)
+
                     self.logger.error(
                         "supervisor",
                         "runtime",
                         "RUN_ONE",
-                        detail=result.error_text or "Run failed",
+                        detail=self._last_error,
                         run_index=ctx.run_index,
                         total_runs=ctx.total_runs,
+                        attempt=attempt,
                     )
                     return
+
+                with self._lock:
+                    self._last_error = f"Unhandled recovery action: {decision.action}"
+                    self._last_event = "Unhandled recovery action"
+                    self.state_machine.transition(SupervisorState.ERROR)
+
+                self.logger.error(
+                    "supervisor",
+                    "runtime",
+                    "UNHANDLED_RECOVERY_ACTION",
+                    detail=str(decision.action),
+                    run_index=ctx.run_index,
+                    total_runs=ctx.total_runs,
+                    attempt=attempt,
+                )
+                return
 
             with self._lock:
                 if self.state_machine.state == SupervisorState.STOPPING:
@@ -453,3 +614,94 @@ class Supervisor:
     def active_thread_alive(self) -> bool:
         with self._lock:
             return self._active_thread is not None and self._active_thread.is_alive()
+        
+    def _decide_recovery(self, result: EngineRunResult) -> RecoveryDecision:
+        last = result.last_result
+        if last is None:
+            return RecoveryDecision(
+                failure_class=FailureClass.UNKNOWN,
+                action=RecoveryAction.MANUAL_INTERVENTION,
+                detail="No last_result available",
+            )
+
+        fc = last.failure_class or FailureClass.UNKNOWN.value
+
+        if fc == FailureClass.OPERATOR_STOP.value:
+            return RecoveryDecision(
+                failure_class=FailureClass.OPERATOR_STOP,
+                action=RecoveryAction.RECONNECT_AND_CONTINUE,
+                detail="Operator stop allows continue from checkpoint",
+            )
+
+        if fc == FailureClass.MOTION_POSE_UNCERTAIN.value:
+            return RecoveryDecision(
+                failure_class=FailureClass.MOTION_POSE_UNCERTAIN,
+                action=RecoveryAction.RESTART_RUN,
+                max_retries=3,
+                clear_current_run_checkpoint=True,
+                reconnect_motion=True,
+                require_motion_status_check=True,
+                detail="Motion pose uncertain, restart current run",
+            )
+
+        if fc == FailureClass.DEVICE_PROCESS.value:
+            last_cmd = last.command.upper()
+            if last_cmd.startswith("HOME ALL"):
+                return RecoveryDecision(
+                    failure_class=FailureClass.DEVICE_PROCESS,
+                    action=RecoveryAction.RETRY_STEP,
+                    max_retries=3,
+                    reconnect_peripheral=False,
+                    require_peripheral_status_check=True,
+                    require_peripheral_home_all=True,
+                    detail="Retry peripheral homing",
+                )
+            if last_cmd.startswith("SOLUTION"):
+                return RecoveryDecision(
+                    failure_class=FailureClass.DEVICE_PROCESS,
+                    action=RecoveryAction.RESTART_RUN,
+                    max_retries=3,
+                    clear_current_run_checkpoint=True,
+                    reconnect_peripheral=True,
+                    require_peripheral_status_check=True,
+                    require_peripheral_home_all=True,
+                    detail="SOLUTION failure requires run restart",
+                )
+
+        if fc == FailureClass.TRANSPORT.value:
+            cmd = (last.command or "").upper()
+            if "PEO" in cmd:
+                return RecoveryDecision(
+                    failure_class=FailureClass.TRANSPORT,
+                    action=RecoveryAction.RECONNECT_AND_CONTINUE,
+                    max_retries=3,
+                    reconnect_peo=True,
+                    detail="Reconnect PEO and continue",
+                )
+            if "SPECTRUM" in cmd:
+                return RecoveryDecision(
+                    failure_class=FailureClass.TRANSPORT,
+                    action=RecoveryAction.RECONNECT_AND_CONTINUE,
+                    max_retries=3,
+                    reconnect_spectrometer=True,
+                    detail="Reconnect spectrometer and continue",
+                )
+            return RecoveryDecision(
+                failure_class=FailureClass.TRANSPORT,
+                action=RecoveryAction.MANUAL_INTERVENTION,
+                max_retries=3,
+                detail="Generic transport failure needs manual review",
+            )
+
+        return RecoveryDecision(
+            failure_class=FailureClass.UNKNOWN,
+            action=RecoveryAction.MANUAL_INTERVENTION,
+            detail="Unknown failure class",
+        )
+    
+    def _increment_run_retry(self, run_index: int) -> int:
+        self._run_retry_counts[run_index] = self._run_retry_counts.get(run_index, 0) + 1
+        return self._run_retry_counts[run_index]
+
+    def _clear_run_retry(self, run_index: int) -> None:
+        self._run_retry_counts.pop(run_index, None)

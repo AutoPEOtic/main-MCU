@@ -24,7 +24,7 @@ from src.engine.actions import (
 )
 from src.engine.checkpoint_store import CheckpointStore, CheckpointRecord
 from src.engine.instruction_parser import parse_instruction_file
-
+from src.core.recovery_policy import FailureClass, RecoveryAction, RecoveryDecision
 
 @dataclass
 class EngineRunResult:
@@ -157,12 +157,13 @@ class ExperimentEngine:
                         error_text=result.detail or result.code.value,
                     )
 
-                self.checkpoint_store.save_success(
-                    ctx=ctx,
-                    action_index=action_index,
-                    total_actions=len(actions),
-                    action_name=action_name,
-                )
+                if self._is_recovery_safe_boundary(action, result):
+                    self.checkpoint_store.save_success(
+                        ctx=ctx,
+                        action_index=action_index,
+                        total_actions=len(actions),
+                        action_name=action_name,
+                    )
 
                 self.logger.info(
                     "engine",
@@ -225,6 +226,8 @@ class ExperimentEngine:
 
     def _check_stop(self) -> None:
         if self._stop_requested:
+            failure_class=FailureClass.OPERATOR_STOP.value
+            esume_safe=True
             raise StopRequested("Execution stop requested")
 
     def _bind_actions_for_run(self, actions: List[Action], ctx: RunContext) -> List[Action]:
@@ -307,3 +310,30 @@ class ExperimentEngine:
     @staticmethod
     def _action_name(action: Action) -> str:
         return type(action).__name__
+
+    def _is_recovery_safe_boundary(self, action: Action, result: CommandResult) -> bool:
+        if result.code != ResultCode.OK:
+            return False
+
+        if isinstance(action, (
+            SolutionAction,
+            SpectrumAcquireAction,
+            PEOSendValuesAction,
+            PEOOffAction,
+        )):
+            return True
+
+        if isinstance(action, PeripheralAction):
+            upper = action.command.upper()
+            if upper.startswith(("HOME ALL", "CUT", "FLUSH", "DEOXIDIZE")):
+                return True
+            return False
+
+        if isinstance(action, MotionAction):
+            # motion move is only a safe boundary if motion remained trusted
+            return result.resume_safe
+
+        if isinstance(action, (MotionConfigAction, HomeAction, DelayAction, ReconnectAction)):
+            return False
+
+        return False

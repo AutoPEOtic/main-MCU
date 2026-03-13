@@ -5,7 +5,8 @@ from typing import Dict, Iterable, Optional
 from src.config.runtime_config import RuntimeConfig
 from src.core.errors import DeviceUnhealthyError, ValidationError
 from src.core.logging_utils import EventLogger
-from src.core.models import CommandResult, DeviceName, RuntimeSnapshot
+from src.core.models import CommandResult, DeviceName, DeviceTrust
+
 
 from src.devices.motion_worker import MotionWorker
 from src.devices.peripheral_worker import PeripheralWorker
@@ -116,3 +117,21 @@ class DeviceManager:
 
     def peo_off(self) -> CommandResult:
         return self.peo.execute_off()
+    
+    def recover_motion_basic(self) -> None:
+        self.logger.info("device_manager", "motion", "RECOVER_MOTION_BASIC", "START")
+        self.reconnect_device(DeviceName.MOTION)
+        self.send_motion_config("$X", wait_idle=False)
+        self.healthcheck_device(DeviceName.MOTION)
+        self.logger.info("device_manager", "motion", "RECOVER_MOTION_BASIC", "OK")
+
+    def recover_peripheral_basic(self, do_home_all: bool = False) -> None:
+        self.logger.info("device_manager", "peripheral", "RECOVER_PERIPHERAL_BASIC", "START", do_home_all=do_home_all)
+        self.reconnect_device(DeviceName.PERIPHERAL)
+        self.send_peripheral_text("STATUS", timeout_s=5.0)
+        if do_home_all:
+            self.send_peripheral_text("HOME ALL", timeout_s=180.0)
+        self.logger.info("device_manager", "peripheral", "RECOVER_PERIPHERAL_BASIC", "OK", do_home_all=do_home_all)
+
+    def device_trust(self, name: DeviceName) -> str:
+        return self._workers[name].trust.value
