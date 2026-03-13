@@ -126,12 +126,24 @@ class DeviceManager:
         self.logger.info("device_manager", "motion", "RECOVER_MOTION_BASIC", "OK")
 
     def recover_peripheral_basic(self, do_home_all: bool = False) -> None:
-        self.logger.info("device_manager", "peripheral", "RECOVER_PERIPHERAL_BASIC", "START", do_home_all=do_home_all)
+        self.logger.info(
+            "device_manager",
+            "peripheral",
+            "RECOVER_PERIPHERAL_BASIC",
+            "START",
+            do_home_all=do_home_all,
+        )
         self.reconnect_device(DeviceName.PERIPHERAL)
         self.send_peripheral_text("STATUS", timeout_s=5.0)
         if do_home_all:
             self.send_peripheral_text("HOME ALL", timeout_s=180.0)
-        self.logger.info("device_manager", "peripheral", "RECOVER_PERIPHERAL_BASIC", "OK", do_home_all=do_home_all)
+        self.logger.info(
+            "device_manager",
+            "peripheral",
+            "RECOVER_PERIPHERAL_BASIC",
+            "OK",
+            do_home_all=do_home_all,
+        )
 
     def device_trust(self, name: DeviceName) -> str:
         return self._workers[name].trust.value

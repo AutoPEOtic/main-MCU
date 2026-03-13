@@ -301,9 +301,6 @@ class Supervisor:
                     run_idx += 1
                     continue
 
-                # ------------------------------
-                # run failed -> policy handling
-                # ------------------------------
                 with self._lock:
                     self._last_error = result.error_text or "Run failed"
                     self._last_event = f"Run {ctx.run_index}/{ctx.total_runs} failed"
@@ -348,8 +345,7 @@ class Supervisor:
                 if decision.max_retries > 0 and attempt > decision.max_retries:
                     with self._lock:
                         self._last_error = (
-                            f"{decision.detail}; exceeded retry limit "
-                            f"({decision.max_retries})"
+                            f"{decision.detail}; exceeded retry limit ({decision.max_retries})"
                         )
                         self._last_event = (
                             f"Run {ctx.run_index}/{ctx.total_runs} exceeded retry limit"
@@ -375,6 +371,10 @@ class Supervisor:
                         self.device_manager.recover_peripheral_basic(
                             do_home_all=decision.require_peripheral_home_all
                         )
+                    elif decision.require_peripheral_status_check:
+                        self.device_manager.send_peripheral_text("STATUS", timeout_s=5.0)
+                        if decision.require_peripheral_home_all:
+                            self.device_manager.send_peripheral_text("HOME ALL", timeout_s=180.0)
 
                     if decision.reconnect_peo:
                         self.device_manager.reconnect_device(DeviceName.PEO)
@@ -699,9 +699,97 @@ class Supervisor:
             detail="Unknown failure class",
         )
     
+
     def _increment_run_retry(self, run_index: int) -> int:
         self._run_retry_counts[run_index] = self._run_retry_counts.get(run_index, 0) + 1
         return self._run_retry_counts[run_index]
 
     def _clear_run_retry(self, run_index: int) -> None:
         self._run_retry_counts.pop(run_index, None)
+
+    def _decide_recovery(self, result) -> RecoveryDecision:
+        last = result.last_result
+        if last is None:
+            return RecoveryDecision(
+                failure_class=FailureClass.UNKNOWN,
+                action=RecoveryAction.MANUAL_INTERVENTION,
+                detail="No last_result available",
+            )
+
+        fc = last.failure_class or FailureClass.UNKNOWN.value
+        cmd = (last.command or "").upper()
+
+        if fc == FailureClass.OPERATOR_STOP.value:
+            return RecoveryDecision(
+                failure_class=FailureClass.OPERATOR_STOP,
+                action=RecoveryAction.RECONNECT_AND_CONTINUE,
+                detail="Operator stop allows continue from checkpoint",
+            )
+
+        if fc == FailureClass.MOTION_POSE_UNCERTAIN.value:
+            return RecoveryDecision(
+                failure_class=FailureClass.MOTION_POSE_UNCERTAIN,
+                action=RecoveryAction.RESTART_RUN,
+                max_retries=3,
+                clear_current_run_checkpoint=True,
+                reconnect_motion=True,
+                require_motion_status_check=True,
+                detail="Motion pose uncertain, restart current run",
+            )
+
+        if fc == FailureClass.DEVICE_PROCESS.value:
+            if cmd.startswith("HOME ALL"):
+                return RecoveryDecision(
+                    failure_class=FailureClass.DEVICE_PROCESS,
+                    action=RecoveryAction.RETRY_STEP,
+                    max_retries=3,
+                    reconnect_peripheral=False,
+                    require_peripheral_status_check=True,
+                    require_peripheral_home_all=True,
+                    detail="Retry peripheral homing",
+                )
+            if cmd.startswith("SOLUTION"):
+                return RecoveryDecision(
+                    failure_class=FailureClass.DEVICE_PROCESS,
+                    action=RecoveryAction.RESTART_RUN,
+                    max_retries=3,
+                    clear_current_run_checkpoint=True,
+                    reconnect_peripheral=True,
+                    require_peripheral_status_check=True,
+                    require_peripheral_home_all=True,
+                    detail="SOLUTION failure requires run restart",
+                )
+
+        if fc == FailureClass.TRANSPORT.value:
+            if "PEO" in cmd:
+                return RecoveryDecision(
+                    failure_class=FailureClass.TRANSPORT,
+                    action=RecoveryAction.RECONNECT_AND_CONTINUE,
+                    max_retries=3,
+                    reconnect_peo=True,
+                    detail="Reconnect PEO and continue",
+                )
+            if "SPECTRUM" in cmd:
+                return RecoveryDecision(
+                    failure_class=FailureClass.TRANSPORT,
+                    action=RecoveryAction.RECONNECT_AND_CONTINUE,
+                    max_retries=3,
+                    reconnect_spectrometer=True,
+                    detail="Reconnect spectrometer and continue",
+                )
+            if cmd.startswith("HOME ALL"):
+                return RecoveryDecision(
+                    failure_class=FailureClass.TRANSPORT,
+                    action=RecoveryAction.RECONNECT_AND_CONTINUE,
+                    max_retries=3,
+                    reconnect_peripheral=True,
+                    require_peripheral_status_check=True,
+                    require_peripheral_home_all=True,
+                    detail="Reconnect peripheral and retry homing",
+                )
+
+        return RecoveryDecision(
+            failure_class=FailureClass.UNKNOWN,
+            action=RecoveryAction.MANUAL_INTERVENTION,
+            detail=f"Unhandled failure class: {fc}, command: {cmd}",
+        )
