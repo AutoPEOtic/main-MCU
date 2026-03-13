@@ -8,3 +8,176 @@
 {"ts": 1773330483.1398757, "layer": "worker", "device": "peo", "command": "PEO OFF", "result": "OK", "detail": "off completed", "extra": {}}
 {"ts": 1773330483.140093, "layer": "device_manager", "device": "all", "command": "SHUTDOWN_ALL", "result": "START", "detail": "", "extra": {}}
 {"ts": 1773330483.142733, "layer": "device_manager", "device": "all", "command": "SHUTDOWN_ALL", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1773332319.027505, "layer": "device_manager", "device": "all", "command": "STARTUP_ALL", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773332325.1025362, "layer": "device_manager", "device": "all", "command": "STARTUP_ALL", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1773332325.1031191, "layer": "engine", "device": "run", "command": "EXECUTE_RUN", "result": "START", "detail": "", "extra": {"program": "migration_test_program", "run_index": 1, "total_runs": 1, "action_start": 0, "action_total": 73, "Upos": 520, "PEO_time": 2, "KOH_target": 0.3}}
+{"ts": 1773332325.1032412, "layer": "engine", "device": "run", "command": "ReconnectAction", "result": "START", "detail": "", "extra": {"action_index": 0, "total_actions": 73, "run_index": 1}}
+{"ts": 1773332325.1033044, "layer": "device_manager", "device": "all", "command": "RECONNECT_ALL", "result": "START", "detail": "", "extra": {"cycle_bus": true}}
+{"ts": 1773332342.8995047, "layer": "device_manager", "device": "all", "command": "RECONNECT_ALL", "result": "OK", "detail": "", "extra": {"cycle_bus": true}}
+{"ts": 1773332342.900037, "layer": "engine", "device": "run", "command": "ReconnectAction", "result": "OK", "detail": "", "extra": {"action_index": 0, "total_actions": 73, "run_index": 1}}
+{"ts": 1773332342.900867, "layer": "engine", "device": "run", "command": "MotionConfigAction", "result": "START", "detail": "", "extra": {"action_index": 1, "total_actions": 73, "run_index": 1}}
+{"ts": 1773332342.9009626, "layer": "worker", "device": "motion", "command": "G91", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773332342.903957, "layer": "worker", "device": "motion", "command": "G91", "result": "OK", "detail": "config accepted", "extra": {}}
+{"ts": 1773332342.9055862, "layer": "engine", "device": "run", "command": "MotionConfigAction", "result": "OK", "detail": "", "extra": {"action_index": 1, "total_actions": 73, "run_index": 1}}
+{"ts": 1773332342.9056542, "layer": "engine", "device": "run", "command": "MotionConfigAction", "result": "START", "detail": "", "extra": {"action_index": 2, "total_actions": 73, "run_index": 1}}
+{"ts": 1773332342.9057064, "layer": "worker", "device": "motion", "command": "F1000", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773332342.908909, "layer": "worker", "device": "motion", "command": "F1000", "result": "OK", "detail": "config accepted", "extra": {}}
+{"ts": 1773332342.9096305, "layer": "engine", "device": "run", "command": "MotionConfigAction", "result": "OK", "detail": "", "extra": {"action_index": 2, "total_actions": 73, "run_index": 1}}
+{"ts": 1773332342.9096954, "layer": "engine", "device": "run", "command": "SolutionAction", "result": "START", "detail": "", "extra": {"action_index": 3, "total_actions": 73, "run_index": 1}}
+{"ts": 1773332342.9097602, "layer": "worker", "device": "peripheral", "command": "SOLUTION total_ml=20.0", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773332357.5361092, "layer": "worker", "device": "peripheral", "command": "SOLUTION total_ml=20.0", "result": "OK", "detail": "OK SOLUTION", "extra": {}}
+{"ts": 1773332357.5420318, "layer": "engine", "device": "run", "command": "SolutionAction", "result": "OK", "detail": "", "extra": {"action_index": 3, "total_actions": 73, "run_index": 1}}
+{"ts": 1773332357.5421348, "layer": "engine", "device": "run", "command": "DelayAction", "result": "START", "detail": "", "extra": {"action_index": 4, "total_actions": 73, "run_index": 1}}
+{"ts": 1773332358.542892, "layer": "engine", "device": "run", "command": "DelayAction", "result": "OK", "detail": "", "extra": {"action_index": 4, "total_actions": 73, "run_index": 1}}
+{"ts": 1773332358.543008, "layer": "engine", "device": "run", "command": "PEOOffAction", "result": "START", "detail": "", "extra": {"action_index": 5, "total_actions": 73, "run_index": 1}}
+{"ts": 1773332358.543086, "layer": "worker", "device": "peo", "command": "PEO OFF", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773332361.5474093, "layer": "worker", "device": "peo", "command": "PEO OFF", "result": "OK", "detail": "off completed", "extra": {}}
+{"ts": 1773332361.5480459, "layer": "engine", "device": "run", "command": "PEOOffAction", "result": "OK", "detail": "", "extra": {"action_index": 5, "total_actions": 73, "run_index": 1}}
+{"ts": 1773332361.5481315, "layer": "engine", "device": "run", "command": "MotionConfigAction", "result": "START", "detail": "", "extra": {"action_index": 6, "total_actions": 73, "run_index": 1}}
+{"ts": 1773332361.548195, "layer": "worker", "device": "motion", "command": "$X", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773332361.55103, "layer": "worker", "device": "motion", "command": "$X", "result": "OK", "detail": "config accepted", "extra": {}}
+{"ts": 1773332361.5514762, "layer": "engine", "device": "run", "command": "MotionConfigAction", "result": "OK", "detail": "", "extra": {"action_index": 6, "total_actions": 73, "run_index": 1}}
+{"ts": 1773332361.5515525, "layer": "engine", "device": "run", "command": "DelayAction", "result": "START", "detail": "", "extra": {"action_index": 7, "total_actions": 73, "run_index": 1}}
+{"ts": 1773332362.5538356, "layer": "engine", "device": "run", "command": "DelayAction", "result": "OK", "detail": "", "extra": {"action_index": 7, "total_actions": 73, "run_index": 1}}
+{"ts": 1773332362.553953, "layer": "engine", "device": "run", "command": "MotionConfigAction", "result": "START", "detail": "", "extra": {"action_index": 8, "total_actions": 73, "run_index": 1}}
+{"ts": 1773332362.554025, "layer": "worker", "device": "motion", "command": "G90", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773332362.5571678, "layer": "worker", "device": "motion", "command": "G90", "result": "OK", "detail": "config accepted", "extra": {}}
+{"ts": 1773332362.5585113, "layer": "engine", "device": "run", "command": "MotionConfigAction", "result": "OK", "detail": "", "extra": {"action_index": 8, "total_actions": 73, "run_index": 1}}
+{"ts": 1773332362.5585902, "layer": "engine", "device": "run", "command": "MotionAction", "result": "START", "detail": "", "extra": {"action_index": 9, "total_actions": 73, "run_index": 1}}
+{"ts": 1773332362.558648, "layer": "worker", "device": "motion", "command": "G21", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773332362.612227, "layer": "worker", "device": "motion", "command": "G21", "result": "OK", "detail": "motion completed", "extra": {}}
+{"ts": 1773332362.6127524, "layer": "engine", "device": "run", "command": "MotionAction", "result": "OK", "detail": "", "extra": {"action_index": 9, "total_actions": 73, "run_index": 1}}
+{"ts": 1773332362.6128254, "layer": "engine", "device": "run", "command": "MotionConfigAction", "result": "START", "detail": "", "extra": {"action_index": 10, "total_actions": 73, "run_index": 1}}
+{"ts": 1773332362.6128836, "layer": "worker", "device": "motion", "command": "G94", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773332362.6160476, "layer": "worker", "device": "motion", "command": "G94", "result": "OK", "detail": "config accepted", "extra": {}}
+{"ts": 1773332362.6165032, "layer": "engine", "device": "run", "command": "MotionConfigAction", "result": "OK", "detail": "", "extra": {"action_index": 10, "total_actions": 73, "run_index": 1}}
+{"ts": 1773332362.61657, "layer": "engine", "device": "run", "command": "MotionConfigAction", "result": "START", "detail": "", "extra": {"action_index": 11, "total_actions": 73, "run_index": 1}}
+{"ts": 1773332362.6166213, "layer": "worker", "device": "motion", "command": "G54", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773332362.6195812, "layer": "worker", "device": "motion", "command": "G54", "result": "OK", "detail": "config accepted", "extra": {}}
+{"ts": 1773332362.6199734, "layer": "engine", "device": "run", "command": "MotionConfigAction", "result": "OK", "detail": "", "extra": {"action_index": 11, "total_actions": 73, "run_index": 1}}
+{"ts": 1773332362.620036, "layer": "engine", "device": "run", "command": "MotionConfigAction", "result": "START", "detail": "", "extra": {"action_index": 12, "total_actions": 73, "run_index": 1}}
+{"ts": 1773332362.620083, "layer": "worker", "device": "motion", "command": "$X", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773332362.6234627, "layer": "worker", "device": "motion", "command": "$X", "result": "OK", "detail": "config accepted", "extra": {}}
+{"ts": 1773332362.6240537, "layer": "engine", "device": "run", "command": "MotionConfigAction", "result": "OK", "detail": "", "extra": {"action_index": 12, "total_actions": 73, "run_index": 1}}
+{"ts": 1773332362.6241186, "layer": "engine", "device": "run", "command": "HomeAction", "result": "START", "detail": "", "extra": {"action_index": 13, "total_actions": 73, "run_index": 1}}
+{"ts": 1773332362.6241825, "layer": "worker", "device": "motion", "command": "$H", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773333335.8984482, "layer": "supervisor", "device": "runtime", "command": "LOAD_PROGRAM", "result": "OK", "detail": "", "extra": {"program": "supervisor_smoke", "total_runs": 1}}
+{"ts": 1773333335.8985689, "layer": "device_manager", "device": "all", "command": "STARTUP_ALL", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773333341.953169, "layer": "device_manager", "device": "all", "command": "STARTUP_ALL", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1773333341.9533286, "layer": "supervisor", "device": "runtime", "command": "STARTUP", "result": "ERROR", "detail": "Illegal transition: SupervisorState.STARTING -> SupervisorState.IDLE", "extra": {}}
+{"ts": 1773402933.0946345, "layer": "supervisor", "device": "runtime", "command": "LOAD_PROGRAM", "result": "OK", "detail": "", "extra": {"program": "supervisor_smoke", "total_runs": 1}}
+{"ts": 1773402933.0956025, "layer": "device_manager", "device": "all", "command": "STARTUP_ALL", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773402939.1778684, "layer": "device_manager", "device": "all", "command": "STARTUP_ALL", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1773402939.1780152, "layer": "supervisor", "device": "runtime", "command": "STARTUP", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1773402939.1781046, "layer": "device_manager", "device": "all", "command": "SHUTDOWN_ALL", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773402939.1813507, "layer": "device_manager", "device": "all", "command": "SHUTDOWN_ALL", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1773402939.1815565, "layer": "supervisor", "device": "runtime", "command": "SHUTDOWN", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1773403094.1763988, "layer": "supervisor", "device": "runtime", "command": "LOAD_PROGRAM", "result": "OK", "detail": "", "extra": {"program": "supervisor_smoke", "total_runs": 1}}
+{"ts": 1773403094.1766205, "layer": "device_manager", "device": "all", "command": "STARTUP_ALL", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773403100.2429836, "layer": "device_manager", "device": "all", "command": "STARTUP_ALL", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1773403100.2431157, "layer": "supervisor", "device": "runtime", "command": "STARTUP", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1773403100.2431812, "layer": "supervisor", "device": "runtime", "command": "RUN_BLOCKING", "result": "START", "detail": "", "extra": {"program": "supervisor_smoke", "total_runs": 1}}
+{"ts": 1773403100.2432618, "layer": "supervisor", "device": "runtime", "command": "RUN_ONE", "result": "START", "detail": "", "extra": {"run_index": 1, "total_runs": 1, "Upos": 520, "PEO_time": 2, "KOH_target": 0.3}}
+{"ts": 1773403100.2433767, "layer": "supervisor", "device": "runtime", "command": "RUN_BLOCKING", "result": "ERROR", "detail": "[Errno 2] No such file or directory: 'settings/instructions_engine_smoke.txt'", "extra": {}}
+{"ts": 1773403100.2434413, "layer": "device_manager", "device": "all", "command": "SHUTDOWN_ALL", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773403100.2474573, "layer": "device_manager", "device": "all", "command": "SHUTDOWN_ALL", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1773403100.2475572, "layer": "supervisor", "device": "runtime", "command": "SHUTDOWN", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1773403325.872783, "layer": "supervisor", "device": "runtime", "command": "LOAD_PROGRAM", "result": "OK", "detail": "", "extra": {"program": "supervisor_smoke", "total_runs": 1}}
+{"ts": 1773403325.8729033, "layer": "device_manager", "device": "all", "command": "STARTUP_ALL", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773403331.943785, "layer": "device_manager", "device": "all", "command": "STARTUP_ALL", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1773403331.9439232, "layer": "supervisor", "device": "runtime", "command": "STARTUP", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1773403331.9439917, "layer": "supervisor", "device": "runtime", "command": "RUN_BLOCKING", "result": "START", "detail": "", "extra": {"program": "supervisor_smoke", "total_runs": 1}}
+{"ts": 1773403331.9440594, "layer": "supervisor", "device": "runtime", "command": "RUN_ONE", "result": "START", "detail": "", "extra": {"run_index": 1, "total_runs": 1, "Upos": 520, "PEO_time": 2, "KOH_target": 0.3}}
+{"ts": 1773403331.9442182, "layer": "engine", "device": "run", "command": "EXECUTE_RUN", "result": "START", "detail": "", "extra": {"program": "supervisor_smoke", "run_index": 1, "total_runs": 1, "action_start": 0, "action_total": 6, "Upos": 520, "PEO_time": 2, "KOH_target": 0.3}}
+{"ts": 1773403331.9442852, "layer": "engine", "device": "run", "command": "ReconnectAction", "result": "START", "detail": "", "extra": {"action_index": 0, "total_actions": 6, "run_index": 1}}
+{"ts": 1773403331.9443462, "layer": "device_manager", "device": "all", "command": "RECONNECT_ALL", "result": "START", "detail": "", "extra": {"cycle_bus": true}}
+{"ts": 1773403349.6899009, "layer": "device_manager", "device": "all", "command": "RECONNECT_ALL", "result": "OK", "detail": "", "extra": {"cycle_bus": true}}
+{"ts": 1773403349.6907537, "layer": "engine", "device": "run", "command": "ReconnectAction", "result": "OK", "detail": "", "extra": {"action_index": 0, "total_actions": 6, "run_index": 1}}
+{"ts": 1773403349.690851, "layer": "engine", "device": "run", "command": "MotionConfigAction", "result": "START", "detail": "", "extra": {"action_index": 1, "total_actions": 6, "run_index": 1}}
+{"ts": 1773403349.690944, "layer": "worker", "device": "motion", "command": "G91", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773403349.6940665, "layer": "worker", "device": "motion", "command": "G91", "result": "OK", "detail": "config accepted", "extra": {}}
+{"ts": 1773403349.6945426, "layer": "engine", "device": "run", "command": "MotionConfigAction", "result": "OK", "detail": "", "extra": {"action_index": 1, "total_actions": 6, "run_index": 1}}
+{"ts": 1773403349.6946237, "layer": "engine", "device": "run", "command": "MotionConfigAction", "result": "START", "detail": "", "extra": {"action_index": 2, "total_actions": 6, "run_index": 1}}
+{"ts": 1773403349.6946957, "layer": "worker", "device": "motion", "command": "F1000", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773403349.6979551, "layer": "worker", "device": "motion", "command": "F1000", "result": "OK", "detail": "config accepted", "extra": {}}
+{"ts": 1773403349.6983192, "layer": "engine", "device": "run", "command": "MotionConfigAction", "result": "OK", "detail": "", "extra": {"action_index": 2, "total_actions": 6, "run_index": 1}}
+{"ts": 1773403349.6983776, "layer": "engine", "device": "run", "command": "SolutionAction", "result": "START", "detail": "", "extra": {"action_index": 3, "total_actions": 6, "run_index": 1}}
+{"ts": 1773403349.698433, "layer": "worker", "device": "peripheral", "command": "SOLUTION total_ml=20.0", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773403393.2480996, "layer": "supervisor", "device": "runtime", "command": "LOAD_PROGRAM", "result": "OK", "detail": "", "extra": {"program": "supervisor_smoke", "total_runs": 1}}
+{"ts": 1773403393.2726204, "layer": "device_manager", "device": "all", "command": "STARTUP_ALL", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773403399.325686, "layer": "device_manager", "device": "all", "command": "STARTUP_ALL", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1773403399.3259032, "layer": "supervisor", "device": "runtime", "command": "STARTUP", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1773403399.3259768, "layer": "supervisor", "device": "runtime", "command": "RUN_BLOCKING", "result": "START", "detail": "", "extra": {"program": "supervisor_smoke", "total_runs": 1}}
+{"ts": 1773403399.326057, "layer": "supervisor", "device": "runtime", "command": "RUN_ONE", "result": "START", "detail": "", "extra": {"run_index": 1, "total_runs": 1, "Upos": 520, "PEO_time": 2, "KOH_target": 0.3}}
+{"ts": 1773403399.3262846, "layer": "engine", "device": "run", "command": "EXECUTE_RUN", "result": "START", "detail": "", "extra": {"program": "supervisor_smoke", "run_index": 1, "total_runs": 1, "action_start": 0, "action_total": 7, "Upos": 520, "PEO_time": 2, "KOH_target": 0.3}}
+{"ts": 1773403399.3263662, "layer": "engine", "device": "run", "command": "ReconnectAction", "result": "START", "detail": "", "extra": {"action_index": 0, "total_actions": 7, "run_index": 1}}
+{"ts": 1773403399.3264399, "layer": "device_manager", "device": "all", "command": "RECONNECT_ALL", "result": "START", "detail": "", "extra": {"cycle_bus": true}}
+{"ts": 1773403417.0612123, "layer": "device_manager", "device": "all", "command": "RECONNECT_ALL", "result": "OK", "detail": "", "extra": {"cycle_bus": true}}
+{"ts": 1773403417.0619013, "layer": "engine", "device": "run", "command": "ReconnectAction", "result": "OK", "detail": "", "extra": {"action_index": 0, "total_actions": 7, "run_index": 1}}
+{"ts": 1773403417.0620086, "layer": "engine", "device": "run", "command": "MotionConfigAction", "result": "START", "detail": "", "extra": {"action_index": 1, "total_actions": 7, "run_index": 1}}
+{"ts": 1773403417.0620842, "layer": "worker", "device": "motion", "command": "G91", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773403417.065191, "layer": "worker", "device": "motion", "command": "G91", "result": "OK", "detail": "config accepted", "extra": {}}
+{"ts": 1773403417.0656698, "layer": "engine", "device": "run", "command": "MotionConfigAction", "result": "OK", "detail": "", "extra": {"action_index": 1, "total_actions": 7, "run_index": 1}}
+{"ts": 1773403417.065744, "layer": "engine", "device": "run", "command": "MotionConfigAction", "result": "START", "detail": "", "extra": {"action_index": 2, "total_actions": 7, "run_index": 1}}
+{"ts": 1773403417.065802, "layer": "worker", "device": "motion", "command": "F1000", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773403417.0690875, "layer": "worker", "device": "motion", "command": "F1000", "result": "OK", "detail": "config accepted", "extra": {}}
+{"ts": 1773403417.0695214, "layer": "engine", "device": "run", "command": "MotionConfigAction", "result": "OK", "detail": "", "extra": {"action_index": 2, "total_actions": 7, "run_index": 1}}
+{"ts": 1773403417.0695872, "layer": "engine", "device": "run", "command": "PeripheralAction", "result": "START", "detail": "", "extra": {"action_index": 3, "total_actions": 7, "run_index": 1}}
+{"ts": 1773403417.0696495, "layer": "worker", "device": "peripheral", "command": "HOME ALL", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773403445.2967398, "layer": "worker", "device": "peripheral", "command": "HOME ALL", "result": "OK", "detail": "OK HOME ALL", "extra": {}}
+{"ts": 1773403445.2973895, "layer": "engine", "device": "run", "command": "PeripheralAction", "result": "OK", "detail": "", "extra": {"action_index": 3, "total_actions": 7, "run_index": 1}}
+{"ts": 1773403445.2974985, "layer": "engine", "device": "run", "command": "SolutionAction", "result": "START", "detail": "", "extra": {"action_index": 4, "total_actions": 7, "run_index": 1}}
+{"ts": 1773403445.2975807, "layer": "worker", "device": "peripheral", "command": "SOLUTION total_ml=20.0", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773403459.92313, "layer": "worker", "device": "peripheral", "command": "SOLUTION total_ml=20.0", "result": "OK", "detail": "OK SOLUTION", "extra": {}}
+{"ts": 1773403459.9237943, "layer": "engine", "device": "run", "command": "SolutionAction", "result": "OK", "detail": "", "extra": {"action_index": 4, "total_actions": 7, "run_index": 1}}
+{"ts": 1773403459.9238973, "layer": "engine", "device": "run", "command": "DelayAction", "result": "START", "detail": "", "extra": {"action_index": 5, "total_actions": 7, "run_index": 1}}
+{"ts": 1773403460.924602, "layer": "engine", "device": "run", "command": "DelayAction", "result": "OK", "detail": "", "extra": {"action_index": 5, "total_actions": 7, "run_index": 1}}
+{"ts": 1773403460.9247031, "layer": "engine", "device": "run", "command": "PEOOffAction", "result": "START", "detail": "", "extra": {"action_index": 6, "total_actions": 7, "run_index": 1}}
+{"ts": 1773403460.9247777, "layer": "worker", "device": "peo", "command": "PEO OFF", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773403463.9296217, "layer": "worker", "device": "peo", "command": "PEO OFF", "result": "OK", "detail": "off completed", "extra": {}}
+{"ts": 1773403463.9303024, "layer": "engine", "device": "run", "command": "PEOOffAction", "result": "OK", "detail": "", "extra": {"action_index": 6, "total_actions": 7, "run_index": 1}}
+{"ts": 1773403463.9304216, "layer": "engine", "device": "run", "command": "EXECUTE_RUN", "result": "OK", "detail": "", "extra": {"program": "supervisor_smoke", "run_index": 1, "total_runs": 1, "total_actions": 7}}
+{"ts": 1773403463.9304872, "layer": "supervisor", "device": "runtime", "command": "RUN_ONE", "result": "OK", "detail": "", "extra": {"run_index": 1, "total_runs": 1}}
+{"ts": 1773403463.9305885, "layer": "supervisor", "device": "runtime", "command": "RUN_BLOCKING", "result": "ERROR", "detail": "Illegal transition: SupervisorState.RUNNING -> SupervisorState.IDLE", "extra": {}}
+{"ts": 1773403463.9306474, "layer": "device_manager", "device": "all", "command": "SHUTDOWN_ALL", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773403463.93343, "layer": "device_manager", "device": "all", "command": "SHUTDOWN_ALL", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1773403463.9335234, "layer": "supervisor", "device": "runtime", "command": "SHUTDOWN", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1773403680.5614135, "layer": "supervisor", "device": "runtime", "command": "LOAD_PROGRAM", "result": "OK", "detail": "", "extra": {"program": "supervisor_smoke", "total_runs": 1}}
+{"ts": 1773403680.561708, "layer": "device_manager", "device": "all", "command": "STARTUP_ALL", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773403686.6339934, "layer": "device_manager", "device": "all", "command": "STARTUP_ALL", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1773403686.634144, "layer": "supervisor", "device": "runtime", "command": "STARTUP", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1773403686.634212, "layer": "supervisor", "device": "runtime", "command": "RUN_BLOCKING", "result": "START", "detail": "", "extra": {"program": "supervisor_smoke", "total_runs": 1}}
+{"ts": 1773403686.6342704, "layer": "supervisor", "device": "runtime", "command": "RUN_ONE", "result": "START", "detail": "", "extra": {"run_index": 1, "total_runs": 1, "Upos": 520, "PEO_time": 2, "KOH_target": 0.3}}
+{"ts": 1773403686.6344364, "layer": "engine", "device": "run", "command": "EXECUTE_RUN", "result": "START", "detail": "", "extra": {"program": "supervisor_smoke", "run_index": 1, "total_runs": 1, "action_start": 0, "action_total": 7, "Upos": 520, "PEO_time": 2, "KOH_target": 0.3}}
+{"ts": 1773403686.63451, "layer": "engine", "device": "run", "command": "ReconnectAction", "result": "START", "detail": "", "extra": {"action_index": 0, "total_actions": 7, "run_index": 1}}
+{"ts": 1773403686.6345606, "layer": "device_manager", "device": "all", "command": "RECONNECT_ALL", "result": "START", "detail": "", "extra": {"cycle_bus": true}}
+{"ts": 1773403704.3761885, "layer": "device_manager", "device": "all", "command": "RECONNECT_ALL", "result": "OK", "detail": "", "extra": {"cycle_bus": true}}
+{"ts": 1773403704.3768015, "layer": "engine", "device": "run", "command": "ReconnectAction", "result": "OK", "detail": "", "extra": {"action_index": 0, "total_actions": 7, "run_index": 1}}
+{"ts": 1773403704.3768873, "layer": "engine", "device": "run", "command": "MotionConfigAction", "result": "START", "detail": "", "extra": {"action_index": 1, "total_actions": 7, "run_index": 1}}
+{"ts": 1773403704.3769782, "layer": "worker", "device": "motion", "command": "G91", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773403704.3807595, "layer": "worker", "device": "motion", "command": "G91", "result": "OK", "detail": "config accepted", "extra": {}}
+{"ts": 1773403704.3818176, "layer": "engine", "device": "run", "command": "MotionConfigAction", "result": "OK", "detail": "", "extra": {"action_index": 1, "total_actions": 7, "run_index": 1}}
+{"ts": 1773403704.3819869, "layer": "engine", "device": "run", "command": "MotionConfigAction", "result": "START", "detail": "", "extra": {"action_index": 2, "total_actions": 7, "run_index": 1}}
+{"ts": 1773403704.3821137, "layer": "worker", "device": "motion", "command": "F1000", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773403704.3858204, "layer": "worker", "device": "motion", "command": "F1000", "result": "OK", "detail": "config accepted", "extra": {}}
+{"ts": 1773403704.3881466, "layer": "engine", "device": "run", "command": "MotionConfigAction", "result": "OK", "detail": "", "extra": {"action_index": 2, "total_actions": 7, "run_index": 1}}
+{"ts": 1773403704.388702, "layer": "engine", "device": "run", "command": "PeripheralAction", "result": "START", "detail": "", "extra": {"action_index": 3, "total_actions": 7, "run_index": 1}}
+{"ts": 1773403704.390202, "layer": "worker", "device": "peripheral", "command": "HOME ALL", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773403723.4477272, "layer": "worker", "device": "peripheral", "command": "HOME ALL", "result": "OK", "detail": "OK HOME ALL", "extra": {}}
+{"ts": 1773403723.4482286, "layer": "engine", "device": "run", "command": "PeripheralAction", "result": "OK", "detail": "", "extra": {"action_index": 3, "total_actions": 7, "run_index": 1}}
+{"ts": 1773403723.4482906, "layer": "engine", "device": "run", "command": "SolutionAction", "result": "START", "detail": "", "extra": {"action_index": 4, "total_actions": 7, "run_index": 1}}
+{"ts": 1773403723.4483426, "layer": "worker", "device": "peripheral", "command": "SOLUTION total_ml=20.0", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773403738.0787437, "layer": "worker", "device": "peripheral", "command": "SOLUTION total_ml=20.0", "result": "OK", "detail": "OK SOLUTION", "extra": {}}
+{"ts": 1773403738.0792496, "layer": "engine", "device": "run", "command": "SolutionAction", "result": "OK", "detail": "", "extra": {"action_index": 4, "total_actions": 7, "run_index": 1}}
+{"ts": 1773403738.0793154, "layer": "engine", "device": "run", "command": "DelayAction", "result": "START", "detail": "", "extra": {"action_index": 5, "total_actions": 7, "run_index": 1}}
+{"ts": 1773403739.0799067, "layer": "engine", "device": "run", "command": "DelayAction", "result": "OK", "detail": "", "extra": {"action_index": 5, "total_actions": 7, "run_index": 1}}
+{"ts": 1773403739.0799875, "layer": "engine", "device": "run", "command": "PEOOffAction", "result": "START", "detail": "", "extra": {"action_index": 6, "total_actions": 7, "run_index": 1}}
+{"ts": 1773403739.080042, "layer": "worker", "device": "peo", "command": "PEO OFF", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773403742.0847058, "layer": "worker", "device": "peo", "command": "PEO OFF", "result": "OK", "detail": "off completed", "extra": {}}
+{"ts": 1773403742.0855994, "layer": "engine", "device": "run", "command": "PEOOffAction", "result": "OK", "detail": "", "extra": {"action_index": 6, "total_actions": 7, "run_index": 1}}
+{"ts": 1773403742.0857005, "layer": "engine", "device": "run", "command": "EXECUTE_RUN", "result": "OK", "detail": "", "extra": {"program": "supervisor_smoke", "run_index": 1, "total_runs": 1, "total_actions": 7}}
+{"ts": 1773403742.0857625, "layer": "supervisor", "device": "runtime", "command": "RUN_ONE", "result": "OK", "detail": "", "extra": {"run_index": 1, "total_runs": 1}}
+{"ts": 1773403742.0858104, "layer": "supervisor", "device": "runtime", "command": "RUN_BLOCKING", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1773403742.0862277, "layer": "device_manager", "device": "all", "command": "SHUTDOWN_ALL", "result": "START", "detail": "", "extra": {}}
+{"ts": 1773403742.0887618, "layer": "device_manager", "device": "all", "command": "SHUTDOWN_ALL", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1773403742.0889056, "layer": "supervisor", "device": "runtime", "command": "SHUTDOWN", "result": "OK", "detail": "", "extra": {}}
