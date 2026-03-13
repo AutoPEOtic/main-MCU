@@ -445,3 +445,11 @@ class Supervisor:
     def current_state(self) -> str:
         with self._lock:
             return self.state_machine.state.value
+        
+    def has_program_loaded(self) -> bool:
+        with self._lock:
+            return self._program is not None
+
+    def active_thread_alive(self) -> bool:
+        with self._lock:
+            return self._active_thread is not None and self._active_thread.is_alive()
