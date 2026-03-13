@@ -19,8 +19,9 @@ class SupervisorState(str, Enum):
 _ALLOWED: Dict[SupervisorState, Set[SupervisorState]] = {
     SupervisorState.IDLE: {
         SupervisorState.STARTING,
+        SupervisorState.RUNNING,
         SupervisorState.RECOVERING,
-    },
+},
     SupervisorState.STARTING: {
         SupervisorState.IDLE,
         SupervisorState.RUNNING,
@@ -28,11 +29,12 @@ _ALLOWED: Dict[SupervisorState, Set[SupervisorState]] = {
         SupervisorState.STOPPING,
     },
     SupervisorState.RUNNING: {
+        SupervisorState.IDLE,
         SupervisorState.PAUSED,
         SupervisorState.STOPPING,
         SupervisorState.RECOVERING,
         SupervisorState.ERROR,
-    },
+    },  
     SupervisorState.PAUSED: {
         SupervisorState.RUNNING,
         SupervisorState.STOPPING,

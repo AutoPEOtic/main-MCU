@@ -1,0 +1,24 @@
+{
+  "program_name": "migration_test_program",
+  "run_index": 1,
+  "total_runs": 1,
+  "action_index": 12,
+  "total_actions": 73,
+  "action_name": "MotionConfigAction",
+  "status": "SUCCESS",
+  "params": {
+    "Upos": 520,
+    "PEO_time": 2,
+    "KOH_target": 0.3,
+    "total_ml": 20.0,
+    "mix_channels": {
+      "CH1": 0.7,
+      "CH2": 0.3
+    },
+    "mix_labels": {
+      "H2O": 0.7,
+      "KOH_stock": 0.3
+    }
+  },
+  "updated_at": 1773332362.6235418
+}
