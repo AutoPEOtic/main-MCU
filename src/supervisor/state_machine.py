@@ -22,6 +22,7 @@ _ALLOWED: Dict[SupervisorState, Set[SupervisorState]] = {
         SupervisorState.RECOVERING,
     },
     SupervisorState.STARTING: {
+        SupervisorState.IDLE,
         SupervisorState.RUNNING,
         SupervisorState.ERROR,
         SupervisorState.STOPPING,
