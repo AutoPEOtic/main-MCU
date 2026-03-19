@@ -61,6 +61,15 @@ def parse_instruction_line(line: str) -> Action | None:
             raise ValidationError(f"Invalid PAUSE value: {line}") from exc
         return DelayAction(seconds=seconds)
 
+    if u.startswith(("CH", "INIT", "DEOXIDIZE", "SOLENOID", "FLUSH", "CUT", "FAN", "STATUS")):
+        return PeripheralAction(command=stripped, timeout_s=peripheral_timeout(u))
+        
+    if u.startswith(("G0", "G1", "G2", "G3")):
+        return MotionAction(command=stripped, wait_idle=True)
+
+    if u.startswith(("G21", "G90", "G91", "G94", "G54", "M30", "F", "$X")):
+        return MotionConfigAction(command=stripped)
+
     if u.startswith("HOME"):
         return HomeAction()
 
@@ -75,15 +84,6 @@ def parse_instruction_line(line: str) -> Action | None:
 
     if u.startswith("PEO OFF"):
         return PEOOffAction()
-
-    if u.startswith(("CH", "INIT", "DEOXIDIZE", "SOLENOID", "FLUSH", "CUT", "FAN", "STATUS")):
-        return PeripheralAction(command=stripped, timeout_s=peripheral_timeout(u))
-    
-    if u.startswith(("G0", "G1", "G2", "G3")):
-        return MotionAction(command=stripped, wait_idle=True)
-
-    if u.startswith(("G21", "G90", "G91", "G94", "G54", "M30", "F", "$X")):
-        return MotionConfigAction(command=stripped)
 
     if u.startswith("SOLUTION"):
         # Placeholder action. Actual channels are injected from run context later.

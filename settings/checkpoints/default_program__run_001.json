@@ -1,0 +1,24 @@
+{
+  "program_name": "default_program",
+  "run_index": 1,
+  "total_runs": 27,
+  "action_index": 52,
+  "total_actions": 54,
+  "action_name": "SpectrumAcquireAction",
+  "status": "SUCCESS",
+  "params": {
+    "Upos": 100.0,
+    "PEO_time": 30.0,
+    "KOH_target": 0.1,
+    "total_ml": 20.0,
+    "mix_channels": {
+      "CH1": 0.9,
+      "CH2": 0.1
+    },
+    "mix_labels": {
+      "H2O": 0.9,
+      "KOH_stock": 0.1
+    }
+  },
+  "updated_at": 1773419943.8043666
+}
