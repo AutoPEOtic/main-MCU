@@ -661,18 +661,18 @@ class Supervisor:
                 detail="Operator stop allows continue from checkpoint",
             )
 
+        # No automatic restart on motion uncertainty anymore.
+        # Let operator decide what to do.
         if fc == FailureClass.MOTION_POSE_UNCERTAIN.value:
             return RecoveryDecision(
                 failure_class=FailureClass.MOTION_POSE_UNCERTAIN,
-                action=RecoveryAction.RESTART_RUN,
-                max_retries=3,
-                clear_current_run_checkpoint=True,
-                reconnect_motion=True,
-                require_motion_status_check=True,
-                detail="Motion pose uncertain, restart current run",
+                action=RecoveryAction.MANUAL_INTERVENTION,
+                max_retries=0,
+                detail="Motion pose uncertain; manual intervention required",
             )
 
         if fc == FailureClass.DEVICE_PROCESS.value:
+            # Known and relatively safe case: retry peripheral homing.
             if cmd.startswith("HOME ALL"):
                 return RecoveryDecision(
                     failure_class=FailureClass.DEVICE_PROCESS,
@@ -683,18 +683,18 @@ class Supervisor:
                     require_peripheral_home_all=True,
                     detail="Retry peripheral homing",
                 )
-            if cmd.startswith("SOLUTION"):
-                return RecoveryDecision(
-                    failure_class=FailureClass.DEVICE_PROCESS,
-                    action=RecoveryAction.RESTART_RUN,
-                    max_retries=3,
-                    clear_current_run_checkpoint=True,
-                    reconnect_peripheral=True,
-                    require_peripheral_status_check=True,
-                    require_peripheral_home_all=True,
-                    detail="SOLUTION failure requires run restart",
-                )
+
+            # For other device-process failures, do not auto-restart.
+            return RecoveryDecision(
+                failure_class=FailureClass.DEVICE_PROCESS,
+                action=RecoveryAction.MANUAL_INTERVENTION,
+                max_retries=0,
+                detail=f"Device-process failure requires manual review: {cmd}",
+            )
+
         if fc == FailureClass.PROTOCOL.value:
+            # Protocol mismatch on peripheral path: reconnect and continue,
+            # but do not restart run/program automatically.
             if (
                 cmd.startswith("HOME ALL")
                 or cmd.startswith("STATUS")
@@ -708,15 +708,21 @@ class Supervisor:
             ):
                 return RecoveryDecision(
                     failure_class=FailureClass.PROTOCOL,
-                    action=RecoveryAction.RESTART_RUN,
+                    action=RecoveryAction.RECONNECT_AND_CONTINUE,
                     max_retries=3,
-                    clear_current_run_checkpoint=True,
                     reconnect_peripheral=True,
                     require_peripheral_status_check=True,
-                    require_peripheral_home_all=True,
-                    detail="Peripheral protocol mismatch requires peripheral reconnect and run restart",
+                    require_peripheral_home_all=False,
+                    detail="Peripheral protocol mismatch; reconnect peripheral and continue",
                 )
-            
+
+            return RecoveryDecision(
+                failure_class=FailureClass.PROTOCOL,
+                action=RecoveryAction.MANUAL_INTERVENTION,
+                max_retries=0,
+                detail=f"Protocol failure requires manual review: {cmd}",
+            )
+
         if fc == FailureClass.TRANSPORT.value:
             if "PEO" in cmd:
                 return RecoveryDecision(
@@ -726,6 +732,7 @@ class Supervisor:
                     reconnect_peo=True,
                     detail="Reconnect PEO and continue",
                 )
+
             if "SPECTRUM" in cmd:
                 return RecoveryDecision(
                     failure_class=FailureClass.TRANSPORT,
@@ -734,16 +741,34 @@ class Supervisor:
                     reconnect_spectrometer=True,
                     detail="Reconnect spectrometer and continue",
                 )
-            if cmd.startswith("HOME ALL"):
+
+            if (
+                cmd.startswith("HOME ALL")
+                or cmd.startswith("STATUS")
+                or cmd.startswith("CUT")
+                or cmd.startswith("FLUSH")
+                or cmd.startswith("DEOXIDIZE")
+                or cmd.startswith("SOLUTION")
+                or cmd.startswith("SOLENOID")
+                or cmd.startswith("FAN")
+                or cmd.startswith("CH")
+            ):
                 return RecoveryDecision(
                     failure_class=FailureClass.TRANSPORT,
                     action=RecoveryAction.RECONNECT_AND_CONTINUE,
                     max_retries=3,
                     reconnect_peripheral=True,
                     require_peripheral_status_check=True,
-                    require_peripheral_home_all=True,
-                    detail="Reconnect peripheral and retry homing",
+                    require_peripheral_home_all=False,
+                    detail="Reconnect peripheral and continue",
                 )
+
+            return RecoveryDecision(
+                failure_class=FailureClass.TRANSPORT,
+                action=RecoveryAction.MANUAL_INTERVENTION,
+                max_retries=0,
+                detail="Generic transport failure needs manual review",
+            )
 
         return RecoveryDecision(
             failure_class=FailureClass.UNKNOWN,
