@@ -174,7 +174,31 @@ class LegacyMotionAdapter:
         return self._send_validated(cmd, wait_for_idle=wait_idle)
 
     def home(self) -> GrblExchange:
-        return self._send_validated("$H", wait_for_idle=True, reply_timeout_s=180.0)
+        ser = self._serial()
+
+        self._flush_input_buffer(ser)
+        self._write_line(ser, "$H")
+
+        raw_lines: list[str] = []
+
+        final_status = self._wait_for_idle(
+            ser=ser,
+            timeout_s=180.0,
+            raw_lines=raw_lines,
+        )
+
+        terminal_reply = self._drain_optional_ok_after_home(
+            ser=ser,
+            raw_lines=raw_lines,
+            timeout_s=2.0,
+        )
+
+        return GrblExchange(
+            command="$H",
+            terminal_reply=terminal_reply or "ok",
+            raw_lines=raw_lines,
+            final_status=final_status,
+        )
 
     def _send_validated(
         self,
@@ -309,6 +333,8 @@ class LegacyMotionAdapter:
                 raise TransportError(f"GRBL idle polling failed: {exc}") from exc
 
             poll_deadline = time.time() + 2.0
+            saw_status_this_poll = False
+
             while time.time() < poll_deadline:
                 line = self._read_line_once(ser)
                 if line is None:
@@ -319,9 +345,11 @@ class LegacyMotionAdapter:
                 frame = classify_grbl_line(line)
 
                 if frame.kind == "status":
+                    saw_status_this_poll = True
                     if is_idle_status(line):
                         return line
-                    break
+                    # still running / homing / alarm-like state inside status
+                    continue
 
                 if frame.kind in ("error", "alarm"):
                     raise DeviceProcessError(f"GRBL motion failed while waiting for idle: {line}")
@@ -329,12 +357,40 @@ class LegacyMotionAdapter:
                 if frame.kind == "banner":
                     raise ProtocolError(f"Unexpected GRBL banner while waiting for idle: {line}")
 
-                # ignore stray ok/other lines here
+                # ignore stray ok/other lines while waiting for status
 
+            # no status seen in this poll window -> keep polling until timeout
             time.sleep(0.05)
 
         raise TransportError("GRBL timeout waiting for Idle state")
 
+    def _drain_optional_ok_after_home(self, ser, raw_lines: list[str], timeout_s: float = 2.0) -> Optional[str]:
+        deadline = time.time() + timeout_s
+
+        while time.time() < deadline:
+            line = self._read_line_once(ser)
+            if line is None:
+                time.sleep(0.02)
+                continue
+
+            raw_lines.append(line)
+            frame = classify_grbl_line(line)
+
+            if frame.kind == "ok":
+                return line
+
+            if frame.kind in ("error", "alarm"):
+                raise DeviceProcessError(f"GRBL homing failed after idle: {line}")
+
+            if frame.kind == "banner":
+                raise ProtocolError(f"Unexpected GRBL banner after homing: {line}")
+
+            # ignore extra status / other junk after homing
+            if frame.kind in ("status", "other", "empty"):
+                continue
+
+        return None
+    
     def _read_line_once(self, ser) -> Optional[str]:
         try:
             raw = ser.readline()
