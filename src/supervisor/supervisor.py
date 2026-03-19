@@ -233,6 +233,7 @@ class Supervisor:
             total_runs=total_runs,
         )
 
+        self.engine.set_pause_hook(self._wait_if_paused)
         try:
             run_idx = self._current_run_index
             effective_resume_runs = resume_runs
@@ -527,6 +528,9 @@ class Supervisor:
 
             self.logger.error("supervisor", "runtime", "RUN_BLOCKING", detail=str(exc))
             raise
+        
+        finally:
+            self.engine.set_pause_hook(None)
 
     def run_async(
         self,

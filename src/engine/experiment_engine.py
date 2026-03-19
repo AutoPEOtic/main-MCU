@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Callable, List, Optional
 
 from src.core.errors import DeviceProcessError, StopRequested, ValidationError
 from src.core.logging_utils import EventLogger
@@ -61,6 +61,7 @@ class ExperimentEngine:
         self.checkpoint_store = checkpoint_store
         self.logger = logger
         self._stop_requested = False
+        self._pause_hook: Optional[Callable[[], None]] = None
 
     def request_stop(self) -> None:
         self._stop_requested = True
@@ -113,6 +114,9 @@ class ExperimentEngine:
 
         try:
             for action_index in range(start_index, len(actions)):
+                if self._pause_hook is not None:
+                    self._pause_hook()
+
                 self._check_stop()
 
                 action = actions[action_index]
@@ -224,10 +228,11 @@ class ExperimentEngine:
                 error_text=str(exc),
             )
 
+    def set_pause_hook(self, pause_hook: Optional[Callable[[], None]]) -> None:
+        self._pause_hook = pause_hook
+
     def _check_stop(self) -> None:
         if self._stop_requested:
-            failure_class=FailureClass.OPERATOR_STOP.value
-            esume_safe=True
             raise StopRequested("Execution stop requested")
 
     def _bind_actions_for_run(self, actions: List[Action], ctx: RunContext) -> List[Action]:
