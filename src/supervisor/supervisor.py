@@ -661,8 +661,6 @@ class Supervisor:
                 detail="Operator stop allows continue from checkpoint",
             )
 
-        # No automatic restart on motion uncertainty anymore.
-        # Let operator decide what to do.
         if fc == FailureClass.MOTION_POSE_UNCERTAIN.value:
             return RecoveryDecision(
                 failure_class=FailureClass.MOTION_POSE_UNCERTAIN,
@@ -672,7 +670,6 @@ class Supervisor:
             )
 
         if fc == FailureClass.DEVICE_PROCESS.value:
-            # Known and relatively safe case: retry peripheral homing.
             if cmd.startswith("HOME ALL"):
                 return RecoveryDecision(
                     failure_class=FailureClass.DEVICE_PROCESS,
@@ -684,7 +681,14 @@ class Supervisor:
                     detail="Retry peripheral homing",
                 )
 
-            # For other device-process failures, do not auto-restart.
+            if cmd.startswith(("G", "$H", "$X")):
+                return RecoveryDecision(
+                    failure_class=FailureClass.DEVICE_PROCESS,
+                    action=RecoveryAction.MANUAL_INTERVENTION,
+                    max_retries=0,
+                    detail=f"Motion device-process failure requires manual review: {cmd}",
+                )
+
             return RecoveryDecision(
                 failure_class=FailureClass.DEVICE_PROCESS,
                 action=RecoveryAction.MANUAL_INTERVENTION,
@@ -693,8 +697,16 @@ class Supervisor:
             )
 
         if fc == FailureClass.PROTOCOL.value:
-            # Protocol mismatch on peripheral path: reconnect and continue,
-            # but do not restart run/program automatically.
+            if cmd.startswith(("G", "$H", "$X")):
+                return RecoveryDecision(
+                    failure_class=FailureClass.PROTOCOL,
+                    action=RecoveryAction.RECONNECT_AND_CONTINUE,
+                    max_retries=3,
+                    reconnect_motion=True,
+                    require_motion_status_check=True,
+                    detail="Motion protocol mismatch; reconnect motion and continue",
+                )
+
             if (
                 cmd.startswith("HOME ALL")
                 or cmd.startswith("STATUS")
@@ -740,6 +752,16 @@ class Supervisor:
                     max_retries=3,
                     reconnect_spectrometer=True,
                     detail="Reconnect spectrometer and continue",
+                )
+
+            if cmd.startswith(("G", "$H", "$X")):
+                return RecoveryDecision(
+                    failure_class=FailureClass.TRANSPORT,
+                    action=RecoveryAction.RECONNECT_AND_CONTINUE,
+                    max_retries=3,
+                    reconnect_motion=True,
+                    require_motion_status_check=True,
+                    detail="Reconnect motion and continue",
                 )
 
             if (
