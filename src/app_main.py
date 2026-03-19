@@ -96,8 +96,9 @@ def main() -> None:
                         devices_started = True
 
                     if not supervisor.active_thread_alive():
+                        checkpoint_store.clear_program(build_default_program().name)
                         supervisor.run_async(
-                            resume_runs=bool(payload.get("resume_runs", True)),
+                            resume_runs=False,
                             clear_run_checkpoint_on_success=bool(
                                 payload.get("clear_run_checkpoint_on_success", False)
                             ),

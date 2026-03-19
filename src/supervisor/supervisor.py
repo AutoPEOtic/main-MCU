@@ -57,11 +57,12 @@ class Supervisor:
         self._last_error = ""
         self._last_event = ""
 
+        self._force_fresh_start = False
         self._pause_requested = False
         self._stop_requested = False
         self._restart_run_requested = False
         self._restart_program_requested = False
-
+        
         self._active_thread: Optional[threading.Thread] = None
 
     # ------------------------------------------------------------------
@@ -184,6 +185,7 @@ class Supervisor:
     def request_restart_program(self) -> None:
         with self._lock:
             self._restart_program_requested = True
+            self._force_fresh_start = True
             self._last_event = "Restart program requested"
         self.engine.request_stop()
         self.logger.info("supervisor", "runtime", "RESTART_PROGRAM_REQUEST", "OK")
@@ -194,6 +196,7 @@ class Supervisor:
             self._stop_requested = False
             self._restart_run_requested = False
             self._restart_program_requested = False
+            self._force_fresh_start = False
 
     # ------------------------------------------------------------------
     # execution
@@ -232,6 +235,7 @@ class Supervisor:
 
         try:
             run_idx = self._current_run_index
+            effective_resume_runs = resume_runs
 
             while run_idx < total_runs:
                 with self._lock:
@@ -263,7 +267,7 @@ class Supervisor:
                 result = self.engine.execute_run(
                     ctx=ctx,
                     instructions_path=program.instructions_path,
-                    resume=resume_runs,
+                    resume=effective_resume_runs,
                     clear_checkpoint_on_success=clear_run_checkpoint_on_success,
                 )
 
@@ -285,10 +289,16 @@ class Supervisor:
 
                         if self._restart_program_requested:
                             self._restart_program_requested = False
+                            deleted = self.checkpoint_store.clear_program(program.name)
                             run_idx = 0
                             self._current_run_index = 0
                             self._run_retry_counts = {}
-                            self._last_event = "Restarting full program"
+                            effective_resume_runs = False
+                            self._force_fresh_start = False
+                            self._last_event = (
+                                f"Restarting full program from zero "
+                                f"(cleared {deleted} checkpoint files)"
+                            )
                             continue
 
                         if self._restart_run_requested:
@@ -312,11 +322,17 @@ class Supervisor:
 
                     if self._restart_program_requested:
                         self._restart_program_requested = False
+                        deleted = self.checkpoint_store.clear_program(program.name)
                         run_idx = 0
                         self._current_run_index = 0
                         self._run_retry_counts = {}
                         self._last_error = ""
-                        self._last_event = "Restarting full program after failure"
+                        effective_resume_runs = False
+                        self._force_fresh_start = False
+                        self._last_event = (
+                            f"Restarting full program after failure from zero "
+                            f"(cleared {deleted} checkpoint files)"
+                        )
                         continue
 
                     if self._restart_run_requested:

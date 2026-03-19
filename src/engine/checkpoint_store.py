@@ -103,6 +103,37 @@ class CheckpointStore:
         if os.path.exists(path):
             os.remove(path)
 
+    def list_program_checkpoints(self, program_name: str) -> list[str]:
+        """
+        Return all checkpoint files belonging to one logical program.
+        Useful for debugging and for program-level reset operations.
+        """
+        safe_program = _safe_name(program_name)
+        prefix = f"{safe_program}__run_"
+        matches: list[str] = []
+
+        if not os.path.isdir(self.root_dir):
+            return matches
+
+        for name in os.listdir(self.root_dir):
+            if name.startswith(prefix) and name.endswith(".json"):
+                matches.append(os.path.join(self.root_dir, name))
+
+        matches.sort()
+        return matches
+
+    def clear_program(self, program_name: str) -> int:
+        """
+        Remove all checkpoint files for a given program.
+        Returns the number of deleted checkpoint files.
+        """
+        deleted = 0
+        for path in self.list_program_checkpoints(program_name):
+            if os.path.exists(path):
+                os.remove(path)
+                deleted += 1
+        return deleted
+    
     def mark_failed(
         self,
         ctx: RunContext,
