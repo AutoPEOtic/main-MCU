@@ -14,7 +14,13 @@ from dev.peo import peo_communication
 from src.config.runtime_config import RuntimeConfig
 from src.core.errors import TransportError, DeviceProcessError, ProtocolError
 from src.transport.peripheral_protocol import PeripheralExchange, validate_peripheral_reply
-
+from src.transport.grbl_protocol import (
+    GrblExchange,
+    classify_grbl_line,
+    command_expects_idle_wait,
+    is_idle_status,
+    validate_grbl_terminal_reply,
+)
 
 class LegacyPeripheralAdapter:
     def __init__(self, cfg: RuntimeConfig) -> None:
@@ -127,69 +133,217 @@ class LegacyMotionAdapter:
                 self.cfg.stepper_baudrate,
             )
 
-            ser = getattr(self.dev, "serial", None)
-            if ser is not None:
-                try:
-                    ser.reset_input_buffer()
-                    ser.reset_output_buffer()
-                except Exception:
-                    pass
+            ser = self._serial()
+            try:
+                ser.reset_input_buffer()
+                ser.reset_output_buffer()
+            except Exception:
+                pass
 
         except Exception as exc:
             raise TransportError(f"Failed to open motion device: {exc}") from exc
 
     def close(self) -> None:
         try:
-            if self.dev is not None and getattr(self.dev, "serial", None):
-                self.dev.serial.close()
+            ser = self._serial(optional=True)
+            if ser is not None:
+                ser.close()
         except Exception:
             pass
         self.dev = None
 
-    def unlock(self) -> None:
-        if self.dev is None:
-            raise TransportError("Motion device is not open")
-        try:
-            self.dev.send_gcode("$X", wait_idle=False)
-        except Exception as exc:
-            raise DeviceProcessError(f"Motion unlock failed: {exc}") from exc
+    def unlock(self) -> GrblExchange:
+        return self._send_validated("$X", wait_for_idle=False)
 
     def healthcheck(self) -> str:
-        if self.dev is None:
-            raise TransportError("Motion device is not open")
+        ser = self._serial()
         try:
-            # query status through existing GRBL object if available
-            if hasattr(self.dev, "query_status"):
-                return str(self.dev.query_status())
-            # fallback: lightweight non-motion command
-            self.dev.send_gcode("$X", wait_idle=False)
-            return "OK"
+            status = self._poll_status_once(ser, timeout_s=2.0)
+            if status is not None:
+                return status
+
+            exchange = self._send_validated("$X", wait_for_idle=False)
+            return exchange.terminal_reply
         except Exception as exc:
             raise DeviceProcessError(f"Motion healthcheck failed: {exc}") from exc
 
-    def send_motion(self, cmd: str) -> None:
-        if self.dev is None:
-            raise TransportError("Motion device is not open")
-        try:
-            self.dev.send_motion(cmd)
-        except Exception as exc:
-            raise DeviceProcessError(f"Motion command failed [{cmd}]: {exc}") from exc
+    def send_motion(self, cmd: str) -> GrblExchange:
+        return self._send_validated(cmd, wait_for_idle=True)
 
-    def send_config(self, cmd: str, wait_idle: bool = False) -> None:
-        if self.dev is None:
-            raise TransportError("Motion device is not open")
-        try:
-            self.dev.send_gcode(cmd, wait_idle=wait_idle)
-        except Exception as exc:
-            raise DeviceProcessError(f"Motion config failed [{cmd}]: {exc}") from exc
+    def send_config(self, cmd: str, wait_idle: bool = False) -> GrblExchange:
+        return self._send_validated(cmd, wait_for_idle=wait_idle)
 
-    def home(self) -> None:
-        if self.dev is None:
+    def home(self) -> GrblExchange:
+        return self._send_validated("$H", wait_for_idle=True)
+
+    def _send_validated(self, cmd: str, wait_for_idle: bool) -> GrblExchange:
+        ser = self._serial()
+
+        self._flush_input_buffer(ser)
+        self._write_line(ser, cmd)
+
+        raw_lines: list[str] = []
+        terminal_reply = self._read_terminal_reply(
+            ser=ser,
+            cmd=cmd,
+            timeout_s=5.0,
+            raw_lines=raw_lines,
+        )
+
+        validation = validate_grbl_terminal_reply(cmd, terminal_reply)
+        if validation.ok is False:
+            if validation.is_device_error:
+                raise DeviceProcessError(validation.detail)
+            raise ProtocolError(validation.detail)
+
+        final_status: Optional[str] = None
+        if wait_for_idle or command_expects_idle_wait(cmd):
+            final_status = self._wait_for_idle(
+                ser=ser,
+                timeout_s=180.0,
+                raw_lines=raw_lines,
+            )
+
+        return GrblExchange(
+            command=cmd,
+            terminal_reply=terminal_reply,
+            raw_lines=raw_lines,
+            final_status=final_status,
+        )
+
+    def _serial(self, optional: bool = False):
+        ser = getattr(self.dev, "serial", None) if self.dev is not None else None
+        if ser is None and not optional:
             raise TransportError("Motion device is not open")
+        return ser
+
+    def _flush_input_buffer(self, ser) -> None:
         try:
-            self.dev.home()
+            if hasattr(ser, "reset_input_buffer"):
+                ser.reset_input_buffer()
+                return
+        except Exception:
+            pass
+
+        try:
+            while getattr(ser, "in_waiting", 0):
+                ser.readline()
+        except Exception:
+            pass
+
+    def _write_line(self, ser, cmd: str) -> None:
+        try:
+            ser.write((cmd.strip() + "\n").encode("utf-8"))
+            if hasattr(ser, "flush"):
+                ser.flush()
         except Exception as exc:
-            raise DeviceProcessError(f"Motion homing failed: {exc}") from exc
+            raise TransportError(f"GRBL write failed [{cmd}]: {exc}") from exc
+
+    def _read_terminal_reply(self, ser, cmd: str, timeout_s: float, raw_lines: list[str]) -> str:
+        deadline = time.time() + timeout_s
+
+        while time.time() < deadline:
+            line = self._read_line_once(ser)
+            if line is None:
+                time.sleep(0.02)
+                continue
+
+            raw_lines.append(line)
+            frame = classify_grbl_line(line)
+
+            # Ignore async status chatter during the terminal-reply window.
+            if frame.kind in ("status", "empty"):
+                continue
+
+            # banner after reset/reconnect is not success for active command
+            if frame.kind == "banner":
+                raise ProtocolError(
+                    f"Unexpected GRBL banner during command '{cmd}': {line}"
+                )
+
+            # ok / error / alarm / weird other line
+            return line
+
+        raise TransportError(f"GRBL timeout waiting for terminal reply [{cmd}]")
+
+    def _poll_status_once(self, ser, timeout_s: float = 2.0) -> Optional[str]:
+        try:
+            self._write_line(ser, "?")
+        except Exception as exc:
+            raise TransportError(f"GRBL status query failed: {exc}") from exc
+
+        deadline = time.time() + timeout_s
+        while time.time() < deadline:
+            line = self._read_line_once(ser)
+            if line is None:
+                time.sleep(0.02)
+                continue
+
+            frame = classify_grbl_line(line)
+            if frame.kind == "status":
+                return line
+
+            if frame.kind in ("error", "alarm"):
+                raise DeviceProcessError(f"GRBL status query failed: {line}")
+
+            if frame.kind == "banner":
+                raise ProtocolError(f"Unexpected GRBL banner during status query: {line}")
+
+            # ignore "ok" and unrelated junk here
+
+        raise TransportError("GRBL timeout waiting for status reply")
+
+    def _wait_for_idle(self, ser, timeout_s: float, raw_lines: list[str]) -> str:
+        deadline = time.time() + timeout_s
+
+        while time.time() < deadline:
+            try:
+                self._write_line(ser, "?")
+            except Exception as exc:
+                raise TransportError(f"GRBL idle polling failed: {exc}") from exc
+
+            poll_deadline = time.time() + 2.0
+            while time.time() < poll_deadline:
+                line = self._read_line_once(ser)
+                if line is None:
+                    time.sleep(0.02)
+                    continue
+
+                raw_lines.append(line)
+                frame = classify_grbl_line(line)
+
+                if frame.kind == "status":
+                    if is_idle_status(line):
+                        return line
+                    break
+
+                if frame.kind in ("error", "alarm"):
+                    raise DeviceProcessError(f"GRBL motion failed while waiting for idle: {line}")
+
+                if frame.kind == "banner":
+                    raise ProtocolError(f"Unexpected GRBL banner while waiting for idle: {line}")
+
+                # ignore stray ok/other lines here
+
+            time.sleep(0.05)
+
+        raise TransportError("GRBL timeout waiting for Idle state")
+
+    def _read_line_once(self, ser) -> Optional[str]:
+        try:
+            raw = ser.readline()
+        except Exception as exc:
+            raise TransportError(f"GRBL read failed: {exc}") from exc
+
+        if raw is None:
+            return None
+
+        if isinstance(raw, bytes):
+            text = raw.decode("utf-8", errors="replace").strip()
+        else:
+            text = str(raw).strip()
+
+        return text or None
 
 
 class LegacySpectrometerAdapter:
