@@ -528,7 +528,7 @@ class Supervisor:
 
             self.logger.error("supervisor", "runtime", "RUN_BLOCKING", detail=str(exc))
             raise
-        
+
         finally:
             self.engine.set_pause_hook(None)
 
@@ -635,91 +635,6 @@ class Supervisor:
         with self._lock:
             return self._active_thread is not None and self._active_thread.is_alive()
         
-    def _decide_recovery(self, result: EngineRunResult) -> RecoveryDecision:
-        last = result.last_result
-        if last is None:
-            return RecoveryDecision(
-                failure_class=FailureClass.UNKNOWN,
-                action=RecoveryAction.MANUAL_INTERVENTION,
-                detail="No last_result available",
-            )
-
-        fc = last.failure_class or FailureClass.UNKNOWN.value
-
-        if fc == FailureClass.OPERATOR_STOP.value:
-            return RecoveryDecision(
-                failure_class=FailureClass.OPERATOR_STOP,
-                action=RecoveryAction.RECONNECT_AND_CONTINUE,
-                detail="Operator stop allows continue from checkpoint",
-            )
-
-        if fc == FailureClass.MOTION_POSE_UNCERTAIN.value:
-            return RecoveryDecision(
-                failure_class=FailureClass.MOTION_POSE_UNCERTAIN,
-                action=RecoveryAction.RESTART_RUN,
-                max_retries=3,
-                clear_current_run_checkpoint=True,
-                reconnect_motion=True,
-                require_motion_status_check=True,
-                detail="Motion pose uncertain, restart current run",
-            )
-
-        if fc == FailureClass.DEVICE_PROCESS.value:
-            last_cmd = last.command.upper()
-            if last_cmd.startswith("HOME ALL"):
-                return RecoveryDecision(
-                    failure_class=FailureClass.DEVICE_PROCESS,
-                    action=RecoveryAction.RETRY_STEP,
-                    max_retries=3,
-                    reconnect_peripheral=False,
-                    require_peripheral_status_check=True,
-                    require_peripheral_home_all=True,
-                    detail="Retry peripheral homing",
-                )
-            if last_cmd.startswith("SOLUTION"):
-                return RecoveryDecision(
-                    failure_class=FailureClass.DEVICE_PROCESS,
-                    action=RecoveryAction.RESTART_RUN,
-                    max_retries=3,
-                    clear_current_run_checkpoint=True,
-                    reconnect_peripheral=True,
-                    require_peripheral_status_check=True,
-                    require_peripheral_home_all=True,
-                    detail="SOLUTION failure requires run restart",
-                )
-
-        if fc == FailureClass.TRANSPORT.value:
-            cmd = (last.command or "").upper()
-            if "PEO" in cmd:
-                return RecoveryDecision(
-                    failure_class=FailureClass.TRANSPORT,
-                    action=RecoveryAction.RECONNECT_AND_CONTINUE,
-                    max_retries=3,
-                    reconnect_peo=True,
-                    detail="Reconnect PEO and continue",
-                )
-            if "SPECTRUM" in cmd:
-                return RecoveryDecision(
-                    failure_class=FailureClass.TRANSPORT,
-                    action=RecoveryAction.RECONNECT_AND_CONTINUE,
-                    max_retries=3,
-                    reconnect_spectrometer=True,
-                    detail="Reconnect spectrometer and continue",
-                )
-            return RecoveryDecision(
-                failure_class=FailureClass.TRANSPORT,
-                action=RecoveryAction.MANUAL_INTERVENTION,
-                max_retries=3,
-                detail="Generic transport failure needs manual review",
-            )
-
-        return RecoveryDecision(
-            failure_class=FailureClass.UNKNOWN,
-            action=RecoveryAction.MANUAL_INTERVENTION,
-            detail="Unknown failure class",
-        )
-    
-
     def _increment_run_retry(self, run_index: int) -> int:
         self._run_retry_counts[run_index] = self._run_retry_counts.get(run_index, 0) + 1
         return self._run_retry_counts[run_index]
