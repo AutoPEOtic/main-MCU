@@ -174,9 +174,15 @@ class LegacyMotionAdapter:
         return self._send_validated(cmd, wait_for_idle=wait_idle)
 
     def home(self) -> GrblExchange:
-        return self._send_validated("$H", wait_for_idle=True)
+        return self._send_validated("$H", wait_for_idle=True, reply_timeout_s=180.0)
 
-    def _send_validated(self, cmd: str, wait_for_idle: bool) -> GrblExchange:
+    def _send_validated(
+        self,
+        cmd: str,
+        wait_for_idle: bool,
+        reply_timeout_s: float = 5.0,
+    ) -> GrblExchange:
+        
         ser = self._serial()
 
         self._flush_input_buffer(ser)
@@ -186,7 +192,7 @@ class LegacyMotionAdapter:
         terminal_reply = self._read_terminal_reply(
             ser=ser,
             cmd=cmd,
-            timeout_s=5.0,
+            timeout_s=reply_timeout_s,
             raw_lines=raw_lines,
         )
 
