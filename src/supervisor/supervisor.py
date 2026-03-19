@@ -694,7 +694,29 @@ class Supervisor:
                     require_peripheral_home_all=True,
                     detail="SOLUTION failure requires run restart",
                 )
-
+        if fc == FailureClass.PROTOCOL.value:
+            if (
+                cmd.startswith("HOME ALL")
+                or cmd.startswith("STATUS")
+                or cmd.startswith("CUT")
+                or cmd.startswith("FLUSH")
+                or cmd.startswith("DEOXIDIZE")
+                or cmd.startswith("SOLUTION")
+                or cmd.startswith("SOLENOID")
+                or cmd.startswith("FAN")
+                or cmd.startswith("CH")
+            ):
+                return RecoveryDecision(
+                    failure_class=FailureClass.PROTOCOL,
+                    action=RecoveryAction.RESTART_RUN,
+                    max_retries=3,
+                    clear_current_run_checkpoint=True,
+                    reconnect_peripheral=True,
+                    require_peripheral_status_check=True,
+                    require_peripheral_home_all=True,
+                    detail="Peripheral protocol mismatch requires peripheral reconnect and run restart",
+                )
+            
         if fc == FailureClass.TRANSPORT.value:
             if "PEO" in cmd:
                 return RecoveryDecision(

@@ -12,7 +12,8 @@ from dev.spectrometer import spectrometer_communication
 from dev.peo import peo_communication
 
 from src.config.runtime_config import RuntimeConfig
-from src.core.errors import TransportError, DeviceProcessError
+from src.core.errors import TransportError, DeviceProcessError, ProtocolError
+from src.transport.peripheral_protocol import PeripheralExchange, validate_peripheral_reply
 
 
 class LegacyPeripheralAdapter:
@@ -28,7 +29,7 @@ class LegacyPeripheralAdapter:
                 timeout_s=1.0,
             )
             # Active sync / healthcheck
-            self.dev.send_command("STATUS", reply_timeout_s=5.0)
+            self._send_validated("STATUS", reply_timeout_s=5.0)
         except Exception as exc:
             raise TransportError(f"Failed to open peripheral device: {exc}") from exc
 
@@ -43,30 +44,69 @@ class LegacyPeripheralAdapter:
     def healthcheck(self) -> str:
         if self.dev is None:
             raise TransportError("Peripheral device is not open")
-        try:
-            return self.dev.send_command("STATUS", reply_timeout_s=5.0)
-        except Exception as exc:
-            raise DeviceProcessError(f"Peripheral healthcheck failed: {exc}") from exc
+        exchange = self._send_validated("STATUS", reply_timeout_s=5.0)
+        return exchange.reply
 
-    def send_text(self, cmd: str, timeout_s: float) -> str:
+    def send_text(self, cmd: str, timeout_s: float) -> PeripheralExchange:
         if self.dev is None:
             raise TransportError("Peripheral device is not open")
-        try:
-            return self.dev.send_command(cmd, reply_timeout_s=timeout_s)
-        except Exception as exc:
-            raise DeviceProcessError(f"Peripheral command failed [{cmd}]: {exc}") from exc
+        return self._send_validated(cmd, reply_timeout_s=timeout_s)
 
-    def solution(self, total_ml: float, channels: dict[str, float], timeout_s: float) -> str:
+    def solution(self, total_ml: float, channels: dict[str, float], timeout_s: float) -> PeripheralExchange:
         if self.dev is None:
             raise TransportError("Peripheral device is not open")
+        cmd = self._build_solution_command(total_ml, channels)
+        return self._send_validated(cmd, reply_timeout_s=timeout_s)
+
+    def _send_validated(self, cmd: str, reply_timeout_s: float) -> PeripheralExchange:
+        if self.dev is None:
+            raise TransportError("Peripheral device is not open")
+
+        self._flush_input_buffer()
+
         try:
-            # use existing wrapper for consistency
-            return self.dev.send_command(
-                self._build_solution_command(total_ml, channels),
-                reply_timeout_s=timeout_s,
-            )
+            reply = self.dev.send_command(cmd, reply_timeout_s=reply_timeout_s)
         except Exception as exc:
-            raise DeviceProcessError(f"Peripheral SOLUTION failed: {exc}") from exc
+            raise TransportError(f"Peripheral transport failed [{cmd}]: {exc}") from exc
+
+        exchange = PeripheralExchange(
+            command=cmd,
+            reply=str(reply).strip(),
+            raw_lines=[str(reply).strip()] if reply is not None else [],
+        )
+
+        validation = validate_peripheral_reply(cmd, exchange.reply)
+
+        if validation.ok:
+            return exchange
+
+        if validation.is_device_error:
+            raise DeviceProcessError(validation.detail)
+
+        raise ProtocolError(validation.detail)
+
+    def _flush_input_buffer(self) -> None:
+        if self.dev is None:
+            return
+
+        ser = getattr(self.dev, "serial", None)
+        if ser is None:
+            return
+
+        # Best case: pyserial-style buffer reset
+        try:
+            if hasattr(ser, "reset_input_buffer"):
+                ser.reset_input_buffer()
+                return
+        except Exception:
+            pass
+
+        # Fallback: drain readable lines manually
+        try:
+            while getattr(ser, "in_waiting", 0):
+                ser.readline()
+        except Exception:
+            pass
 
     @staticmethod
     def _build_solution_command(total_ml: float, channels: dict[str, float]) -> str:
@@ -74,7 +114,6 @@ class LegacyPeripheralAdapter:
         for ch, ratio in channels.items():
             parts.extend([ch.upper(), str(ratio)])
         return " ".join(parts)
-
 
 class LegacyMotionAdapter:
     def __init__(self, cfg: RuntimeConfig) -> None:
@@ -273,3 +312,25 @@ def cycle_usb_hubs() -> None:
     for hub in ("1", "2", "3", "4"):
         subprocess.run(["sudo", "uhubctl", "-a", "cycle", "-l", hub], check=False)
     time.sleep(5.0)
+
+def is_valid_reply(cmd, reply):
+    cmd = cmd.upper()
+
+    if cmd.startswith("HOME"):
+        return reply.startswith("OK HOME")
+
+    if cmd.startswith("STATUS"):
+        return reply.startswith("OK STATUS")
+
+    if cmd.startswith("CUT"):
+        return reply.startswith("OK CUT")
+
+    if cmd.startswith("SOLUTION"):
+        return reply.startswith("OK SOLUTION")
+
+    if cmd.startswith("CH"):
+        parts = cmd.split()
+        if len(parts) >= 2:
+            return reply.startswith(f"OK {parts[0]} {parts[1]}")
+
+    return False
