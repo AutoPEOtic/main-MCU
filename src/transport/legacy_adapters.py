@@ -36,7 +36,7 @@ class LegacyPeripheralAdapter:
             )
             # Active sync / healthcheck
             self._ensure_command_mode()
-            self._send_validated("STATUS", reply_timeout_s=5.0)
+            #self._send_validated("STATUS", reply_timeout_s=5.0)
         except Exception as exc:
             raise TransportError(f"Failed to open peripheral device: {exc}") from exc
 
@@ -557,74 +557,98 @@ def _ensure_command_mode(self) -> None:
     if ser is None:
         return
 
-    # Clear buffers
+    # Clear buffers first
     try:
         ser.reset_input_buffer()
         ser.reset_output_buffer()
     except Exception:
         pass
 
-    # Probe device
-    try:
-        ser.write(b"STATUS\n")
-        ser.flush()
-    except Exception:
-        return
-
-    time.sleep(0.5)
+    # Give the port a moment in case the board was just opened/reset
+    time.sleep(0.2)
 
     lines = []
+    deadline = time.time() + 1.5
 
-    while getattr(ser, "in_waiting", 0):
+    # Passive read only: do NOT send STATUS here
+    while time.time() < deadline:
+        if not getattr(ser, "in_waiting", 0):
+            time.sleep(0.05)
+            continue
+
         try:
             raw = ser.readline()
             text = raw.decode("utf-8", errors="ignore").strip()
-            if text:
-                lines.append(text)
         except Exception:
             break
 
+        if text:
+            lines.append(text)
+
     joined = " ".join(lines)
 
-    # Detect REPL
+    # REPL detected -> recover
     if ">>>" in joined:
         self._soft_reboot_pico(ser)
         return
 
-    # Detect valid command mode
-    if "OK" in joined:
+    # Already in command mode / startup banner seen
+    if ("OK READY" in joined) or ("OK INIT" in joined):
+        try:
+            ser.reset_input_buffer()
+        except Exception:
+            pass
         return
 
-    # Unknown state
+    # Silent or unknown state -> soft reboot to force known state
     self._soft_reboot_pico(ser)
 
 def _soft_reboot_pico(self, ser) -> None:
     try:
-        print("[PERIPHERAL] Soft rebooting Pico")
+        # Ctrl-C -> stop REPL-running code / break current state
+        ser.write(b"\x03")
+        ser.flush()
+        time.sleep(0.2)
 
-        ser.write(b"\x03")  # Ctrl-C
-        time.sleep(0.3)
+        # Clear anything already pending
+        try:
+            ser.reset_input_buffer()
+        except Exception:
+            pass
 
-        ser.write(b"\x04")  # Ctrl-D
+        # Ctrl-D -> soft reboot MicroPython
+        ser.write(b"\x04")
         ser.flush()
 
-        time.sleep(2.0)
-
-        # Wait for startup message
         deadline = time.time() + 5.0
+        seen_ready = False
 
         while time.time() < deadline:
-            if getattr(ser, "in_waiting", 0):
-                line = ser.readline().decode(
-                    "utf-8",
-                    errors="ignore"
-                ).strip()
+            if not getattr(ser, "in_waiting", 0):
+                time.sleep(0.05)
+                continue
 
-                if "OK READY" in line:
-                    print("[PERIPHERAL] Pico restarted")
-                    return
+            raw = ser.readline()
+            line = raw.decode("utf-8", errors="ignore").strip()
+            if not line:
+                continue
 
-        print("[PERIPHERAL] Restart timeout")
+            # wait for the real command-loop startup banner
+            if "OK READY" in line:
+                seen_ready = True
+                continue
+
+            if seen_ready and line.startswith("OK INIT"):
+                break
+
+        # Very important: discard leftover startup chatter
+        try:
+            ser.reset_input_buffer()
+            ser.reset_output_buffer()
+        except Exception:
+            pass
+
+        time.sleep(0.2)
 
     except Exception:
         pass
