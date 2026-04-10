@@ -2,10 +2,10 @@
   "program_name": "default_program",
   "run_index": 2,
   "total_runs": 27,
-  "action_index": 52,
+  "action_index": -1,
   "total_actions": 54,
-  "action_name": "SpectrumAcquireAction",
-  "status": "SUCCESS",
+  "action_name": "STOP",
+  "status": "FAILED: Execution stop requested",
   "params": {
     "Upos": 100.0,
     "PEO_time": 30.0,
@@ -20,5 +20,5 @@
       "KOH_stock": 0.55
     }
   },
-  "updated_at": 1773420290.5707762
+  "updated_at": 1773921513.1978393
 }

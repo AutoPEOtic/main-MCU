@@ -1,21 +1,21 @@
 {
-  "supervisor_state": "RUNNING",
+  "supervisor_state": "IDLE",
   "program_name": "default_program",
-  "run_index": 3,
+  "run_index": 2,
   "total_runs": 27,
-  "process": "Run 2/27 finished",
+  "process": "Experiment stopped",
   "params": {
     "Upos": 100.0,
     "PEO_time": 30.0,
-    "KOH_target": 1.0,
+    "KOH_target": 0.55,
     "total_ml": 20.0,
     "mix_channels": {
-      "CH1": 0.0,
-      "CH2": 1.0
+      "CH1": 0.45,
+      "CH2": 0.55
     },
     "mix_labels": {
-      "H2O": 0.0,
-      "KOH_stock": 1.0
+      "H2O": 0.45,
+      "KOH_stock": 0.55
     }
   },
   "devices": {
@@ -32,16 +32,16 @@
       "health": "HEALTHY",
       "trust": "TRUSTED",
       "detail": "motion ok",
-      "last_command": "G1 X-120",
+      "last_command": null,
       "last_result": "OK"
     },
     "spectrometer": {
       "name": "spectrometer",
       "health": "HEALTHY",
       "trust": "TRUSTED",
-      "detail": "healthcheck ok",
+      "detail": "acquire ok",
       "last_command": null,
-      "last_result": null
+      "last_result": "OK"
     },
     "peo": {
       "name": "peo",
@@ -49,9 +49,9 @@
       "trust": "TRUSTED",
       "detail": "healthcheck ok",
       "last_command": null,
-      "last_result": null
+      "last_result": "OK"
     }
   },
-  "last_event": "Run 2/27 finished",
-  "error": null
+  "last_event": "Experiment stopped",
+  "error": "Execution stop requested"
 }
