@@ -35,6 +35,7 @@ class LegacyPeripheralAdapter:
                 timeout_s=1.0,
             )
             # Active sync / healthcheck
+            self._ensure_command_mode()
             self._send_validated("STATUS", reply_timeout_s=5.0)
         except Exception as exc:
             raise TransportError(f"Failed to open peripheral device: {exc}") from exc
@@ -550,3 +551,80 @@ def is_valid_reply(cmd, reply):
             return reply.startswith(f"OK {parts[0]} {parts[1]}")
 
     return False
+
+def _ensure_command_mode(self) -> None:
+    ser = getattr(self.dev, "serial", None)
+    if ser is None:
+        return
+
+    # Clear buffers
+    try:
+        ser.reset_input_buffer()
+        ser.reset_output_buffer()
+    except Exception:
+        pass
+
+    # Probe device
+    try:
+        ser.write(b"STATUS\n")
+        ser.flush()
+    except Exception:
+        return
+
+    time.sleep(0.5)
+
+    lines = []
+
+    while getattr(ser, "in_waiting", 0):
+        try:
+            raw = ser.readline()
+            text = raw.decode("utf-8", errors="ignore").strip()
+            if text:
+                lines.append(text)
+        except Exception:
+            break
+
+    joined = " ".join(lines)
+
+    # Detect REPL
+    if ">>>" in joined:
+        self._soft_reboot_pico(ser)
+        return
+
+    # Detect valid command mode
+    if "OK" in joined:
+        return
+
+    # Unknown state
+    self._soft_reboot_pico(ser)
+
+def _soft_reboot_pico(self, ser) -> None:
+    try:
+        print("[PERIPHERAL] Soft rebooting Pico")
+
+        ser.write(b"\x03")  # Ctrl-C
+        time.sleep(0.3)
+
+        ser.write(b"\x04")  # Ctrl-D
+        ser.flush()
+
+        time.sleep(2.0)
+
+        # Wait for startup message
+        deadline = time.time() + 5.0
+
+        while time.time() < deadline:
+            if getattr(ser, "in_waiting", 0):
+                line = ser.readline().decode(
+                    "utf-8",
+                    errors="ignore"
+                ).strip()
+
+                if "OK READY" in line:
+                    print("[PERIPHERAL] Pico restarted")
+                    return
+
+        print("[PERIPHERAL] Restart timeout")
+
+    except Exception:
+        pass
