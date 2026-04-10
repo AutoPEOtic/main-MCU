@@ -34,7 +34,6 @@ class peripheral_communication:
         self.baudrate = baudrate
         self.timeout_s = timeout_s
         self.serial = self._open_port()
-        self.sync(timeout_s=10.0)
 
         # Give MCU time to boot and print READY/INIT
         time.sleep(0.5)
@@ -130,26 +129,19 @@ class peripheral_communication:
         raise RuntimeError("Peripheral handshake failed (no OK/ERR to INIT). Last lines: " + " | ".join(last_lines))
 
     def send_command(self, cmd: str, expect_reply: bool = True, reply_timeout_s: float = 30.0):
-        """
-        Send one command line and optionally wait for an OK/ERR reply line.
-        Returns:
-            - reply line string (starts with OK/ERR) or None if expect_reply=False
-        Raises:
-            RuntimeError on ERR or timeout
-        """
         cmd = cmd.strip()
         if not cmd:
             return None
 
-        # Write command
         self.serial.write((cmd + "\n").encode("utf-8"))
         print(f"[PERIPHERAL->] {cmd}")
 
         if not expect_reply:
             return None
 
-        # Read lines until OK/ERR or timeout
         t0 = time.time()
+        last_lines = []
+
         while time.time() - t0 < reply_timeout_s:
             raw = self.serial.readline()
             if not raw:
@@ -159,15 +151,17 @@ class peripheral_communication:
                 continue
 
             print(f"[PERIPHERAL<-] {line}")
+            last_lines.append(line)
+            last_lines = last_lines[-20:]
 
             if line.startswith("OK"):
                 return line
             if line.startswith("ERR"):
                 raise RuntimeError(line)
 
-            # Otherwise it's a non-protocol line (debug); keep reading
-
-        raise RuntimeError(f"Peripheral reply timeout for cmd: {cmd}")
+        raise RuntimeError(
+            f"Peripheral reply timeout for cmd: {cmd}. Last lines: {' | '.join(last_lines)}"
+        )
 
     # ---- Compatibility alias (your Linux code sometimes calls send_instruction) ----
     def send_instruction(self, cmd: str, expect_reply: bool = True, reply_timeout_s: float = 30.0):

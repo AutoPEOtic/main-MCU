@@ -28,7 +28,7 @@ def build_default_program() -> ProgramDefinition:
         Upos_values=list(legacy_config.Upos_array),
         PEO_time_values=list(legacy_config.time_array),
         KOH_targets=list(legacy_config.KOH_array),
-        total_ml=float(getattr(legacy_config, "solution_volume_ml", 20.0)),
+        total_ml=float(getattr(legacy_config, "solution_volume_ml", 30.0)),
         water_channel="CH1",
         koh_stock_channel="CH2",
         water_conc=0.0,
