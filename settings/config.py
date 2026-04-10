@@ -1,8 +1,8 @@
 import numpy as np
 
 # --------------- CHANGING VARIABLES --------------- #
-time_start = 300
-time_stop = 1800
+ime_start = 180      # 3 min
+time_stop = 1800      # 30 min
 time_amount = 2
 time_array = np.linspace(time_start, time_stop, time_amount)
 
@@ -15,8 +15,6 @@ KOH_start = 0.1
 KOH_stop = 1
 KOH_amount = 2
 KOH_array = np.linspace(KOH_start, KOH_stop, KOH_amount)
-
-
 
 #[peripheral pico]
 peripheral_pico_port = "/dev/serial/by-id/usb-MicroPython_Board_in_FS_mode_067758c1fcf370c7-if00"
@@ -39,8 +37,8 @@ PEO_baudrate = 19200
 PEO_parity = "E"
 PEO_stopbits = 1
 PEO_bytesize = 8
-PEO_Upos = 500
-PEO_Ipos = 1000
+PEO_Upos = 700
+PEO_Ipos = 10
 PEO_Uneg = 0
 PEO_Ineg = 0
 PEO_Pulsepos = 9999
