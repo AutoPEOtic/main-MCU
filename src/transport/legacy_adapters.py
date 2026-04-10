@@ -36,6 +36,7 @@ class LegacyPeripheralAdapter:
             )
             # Active sync / healthcheck
             self._ensure_command_mode()
+            self.dev.sync(timeout_s=10.0)
             #self._send_validated("STATUS", reply_timeout_s=5.0)
         except Exception as exc:
             raise TransportError(f"Failed to open peripheral device: {exc}") from exc
@@ -115,6 +116,106 @@ class LegacyPeripheralAdapter:
         except Exception:
             pass
 
+    def _ensure_command_mode(self) -> None:
+        ser = getattr(self.dev, "serial", None)
+        if ser is None:
+            return
+
+        # Clear buffers first
+        try:
+            ser.reset_input_buffer()
+            ser.reset_output_buffer()
+        except Exception:
+            pass
+
+        # Give the port a moment in case the board was just opened/reset
+        time.sleep(0.2)
+
+        lines = []
+        deadline = time.time() + 1.5
+
+        # Passive read only: do NOT send STATUS here
+        while time.time() < deadline:
+            if not getattr(ser, "in_waiting", 0):
+                time.sleep(0.05)
+                continue
+
+            try:
+                raw = ser.readline()
+                text = raw.decode("utf-8", errors="ignore").strip()
+            except Exception:
+                break
+
+            if text:
+                lines.append(text)
+
+        joined = " ".join(lines)
+
+        # REPL detected -> recover
+        if ">>>" in joined:
+            self._soft_reboot_pico(ser)
+            return
+
+        # Already in command mode / startup banner seen
+        if ("OK READY" in joined) or ("OK INIT" in joined):
+            try:
+                ser.reset_input_buffer()
+            except Exception:
+                pass
+            return
+
+        # Silent or unknown state -> soft reboot to force known state
+        self._soft_reboot_pico(ser)
+
+    def _soft_reboot_pico(self, ser) -> None:
+        try:
+            # Ctrl-C -> stop REPL-running code / break current state
+            ser.write(b"\x03")
+            ser.flush()
+            time.sleep(0.2)
+
+            # Clear anything already pending
+            try:
+                ser.reset_input_buffer()
+            except Exception:
+                pass
+
+            # Ctrl-D -> soft reboot MicroPython
+            ser.write(b"\x04")
+            ser.flush()
+
+            deadline = time.time() + 5.0
+            seen_ready = False
+
+            while time.time() < deadline:
+                if not getattr(ser, "in_waiting", 0):
+                    time.sleep(0.05)
+                    continue
+
+                raw = ser.readline()
+                line = raw.decode("utf-8", errors="ignore").strip()
+                if not line:
+                    continue
+
+                # wait for the real command-loop startup banner
+                if "OK READY" in line:
+                    seen_ready = True
+                    continue
+
+                if seen_ready and line.startswith("OK INIT"):
+                    break
+
+            # Very important: discard leftover startup chatter
+            try:
+                ser.reset_input_buffer()
+                ser.reset_output_buffer()
+            except Exception:
+                pass
+
+            time.sleep(0.2)
+
+        except Exception:
+            pass
     @staticmethod
     def _build_solution_command(total_ml: float, channels: dict[str, float]) -> str:
         parts = ["SOLUTION", str(total_ml)]
@@ -551,104 +652,3 @@ def is_valid_reply(cmd, reply):
             return reply.startswith(f"OK {parts[0]} {parts[1]}")
 
     return False
-
-def _ensure_command_mode(self) -> None:
-    ser = getattr(self.dev, "serial", None)
-    if ser is None:
-        return
-
-    # Clear buffers first
-    try:
-        ser.reset_input_buffer()
-        ser.reset_output_buffer()
-    except Exception:
-        pass
-
-    # Give the port a moment in case the board was just opened/reset
-    time.sleep(0.2)
-
-    lines = []
-    deadline = time.time() + 1.5
-
-    # Passive read only: do NOT send STATUS here
-    while time.time() < deadline:
-        if not getattr(ser, "in_waiting", 0):
-            time.sleep(0.05)
-            continue
-
-        try:
-            raw = ser.readline()
-            text = raw.decode("utf-8", errors="ignore").strip()
-        except Exception:
-            break
-
-        if text:
-            lines.append(text)
-
-    joined = " ".join(lines)
-
-    # REPL detected -> recover
-    if ">>>" in joined:
-        self._soft_reboot_pico(ser)
-        return
-
-    # Already in command mode / startup banner seen
-    if ("OK READY" in joined) or ("OK INIT" in joined):
-        try:
-            ser.reset_input_buffer()
-        except Exception:
-            pass
-        return
-
-    # Silent or unknown state -> soft reboot to force known state
-    self._soft_reboot_pico(ser)
-
-def _soft_reboot_pico(self, ser) -> None:
-    try:
-        # Ctrl-C -> stop REPL-running code / break current state
-        ser.write(b"\x03")
-        ser.flush()
-        time.sleep(0.2)
-
-        # Clear anything already pending
-        try:
-            ser.reset_input_buffer()
-        except Exception:
-            pass
-
-        # Ctrl-D -> soft reboot MicroPython
-        ser.write(b"\x04")
-        ser.flush()
-
-        deadline = time.time() + 5.0
-        seen_ready = False
-
-        while time.time() < deadline:
-            if not getattr(ser, "in_waiting", 0):
-                time.sleep(0.05)
-                continue
-
-            raw = ser.readline()
-            line = raw.decode("utf-8", errors="ignore").strip()
-            if not line:
-                continue
-
-            # wait for the real command-loop startup banner
-            if "OK READY" in line:
-                seen_ready = True
-                continue
-
-            if seen_ready and line.startswith("OK INIT"):
-                break
-
-        # Very important: discard leftover startup chatter
-        try:
-            ser.reset_input_buffer()
-            ser.reset_output_buffer()
-        except Exception:
-            pass
-
-        time.sleep(0.2)
-
-    except Exception:
-        pass

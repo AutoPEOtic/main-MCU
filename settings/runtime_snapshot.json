@@ -1,57 +1,57 @@
 {
   "supervisor_state": "IDLE",
   "program_name": "default_program",
-  "run_index": 2,
-  "total_runs": 27,
-  "process": "Experiment stopped",
+  "run_index": 1,
+  "total_runs": 9,
+  "process": "Devices shut down",
   "params": {
-    "Upos": 100.0,
+    "Upos": 500.0,
     "PEO_time": 30.0,
-    "KOH_target": 0.55,
-    "total_ml": 20.0,
+    "KOH_target": 0.1,
+    "total_ml": 30.0,
     "mix_channels": {
-      "CH1": 0.45,
-      "CH2": 0.55
+      "CH1": 0.9,
+      "CH2": 0.1
     },
     "mix_labels": {
-      "H2O": 0.45,
-      "KOH_stock": 0.55
+      "H2O": 0.9,
+      "KOH_stock": 0.1
     }
   },
   "devices": {
     "peripheral": {
       "name": "peripheral",
-      "health": "HEALTHY",
-      "trust": "TRUSTED",
-      "detail": "last command ok",
+      "health": "UNHEALTHY",
+      "trust": "UNTRUSTED",
+      "detail": "Peripheral device is not open",
       "last_command": null,
-      "last_result": "OK"
+      "last_result": "ERROR"
     },
     "motion": {
       "name": "motion",
-      "health": "HEALTHY",
-      "trust": "TRUSTED",
-      "detail": "motion ok",
+      "health": "DISCONNECTED",
+      "trust": "UNTRUSTED",
+      "detail": "closed",
       "last_command": null,
       "last_result": "OK"
     },
     "spectrometer": {
       "name": "spectrometer",
-      "health": "HEALTHY",
+      "health": "DISCONNECTED",
       "trust": "TRUSTED",
-      "detail": "acquire ok",
+      "detail": "closed",
       "last_command": null,
-      "last_result": "OK"
+      "last_result": null
     },
     "peo": {
       "name": "peo",
-      "health": "HEALTHY",
+      "health": "DISCONNECTED",
       "trust": "TRUSTED",
-      "detail": "healthcheck ok",
+      "detail": "closed",
       "last_command": null,
-      "last_result": "OK"
+      "last_result": null
     }
   },
-  "last_event": "Experiment stopped",
-  "error": "Execution stop requested"
+  "last_event": "Devices shut down",
+  "error": "Recovery failed: peripheral is not healthy: DeviceHealth.UNHEALTHY"
 }
