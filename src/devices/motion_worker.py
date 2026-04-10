@@ -231,7 +231,7 @@ class MotionWorker(BaseWorker):
                     command=cmd,
                     code=ResultCode.OK,
                     detail=exchange.terminal_reply,
-                    raw_lines=list(exchan]ge.raw_lines),
+                    raw_lines=list(exchange.raw_lines),
                     failure_class=None,
                     resume_safe=True,
                 )

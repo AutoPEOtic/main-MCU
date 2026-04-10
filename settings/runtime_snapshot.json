@@ -1,14 +1,14 @@
 {
-  "supervisor_state": "IDLE",
+  "supervisor_state": "ERROR",
   "program_name": "default_program",
   "run_index": 1,
-  "total_runs": 9,
-  "process": "Devices shut down",
+  "total_runs": 4,
+  "process": "Supervisor runtime failure",
   "params": {
-    "Upos": 500.0,
-    "PEO_time": 30.0,
+    "Upos": 700.0,
+    "PEO_time": 180.0,
     "KOH_target": 0.1,
-    "total_ml": 30.0,
+    "total_ml": 20.0,
     "mix_channels": {
       "CH1": 0.9,
       "CH2": 0.1
@@ -21,37 +21,37 @@
   "devices": {
     "peripheral": {
       "name": "peripheral",
-      "health": "UNHEALTHY",
-      "trust": "UNTRUSTED",
-      "detail": "Peripheral device is not open",
+      "health": "DEGRADED",
+      "trust": "DEGRADED",
+      "detail": "Peripheral transport failed [DEOXIDIZE ALL]: device reports readiness to read but returned no data (device disconnected or multiple access on port?)",
       "last_command": null,
       "last_result": "ERROR"
     },
     "motion": {
       "name": "motion",
-      "health": "DISCONNECTED",
-      "trust": "UNTRUSTED",
-      "detail": "closed",
+      "health": "HEALTHY",
+      "trust": "TRUSTED",
+      "detail": "healthcheck ok",
       "last_command": null,
-      "last_result": "OK"
+      "last_result": null
     },
     "spectrometer": {
       "name": "spectrometer",
-      "health": "DISCONNECTED",
+      "health": "HEALTHY",
       "trust": "TRUSTED",
-      "detail": "closed",
+      "detail": "healthcheck ok",
       "last_command": null,
       "last_result": null
     },
     "peo": {
       "name": "peo",
-      "health": "DISCONNECTED",
+      "health": "HEALTHY",
       "trust": "TRUSTED",
-      "detail": "closed",
+      "detail": "healthcheck ok",
       "last_command": null,
       "last_result": null
     }
   },
-  "last_event": "Devices shut down",
-  "error": "Recovery failed: peripheral is not healthy: DeviceHealth.UNHEALTHY"
+  "last_event": "Supervisor runtime failure",
+  "error": "Startup phase failed at action 2: PeripheralAction: Peripheral transport failed [DEOXIDIZE ALL]: device reports readiness to read but returned no data (device disconnected or multiple access on port?)"
 }

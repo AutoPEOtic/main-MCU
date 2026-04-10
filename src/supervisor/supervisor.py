@@ -224,17 +224,43 @@ class Supervisor:
             program = self._program
             total_runs = len(self._runs)
 
-        self.logger.info(
-            "supervisor",
-            "runtime",
-            "RUN_BLOCKING",
-            "START",
-            program=program.name,
-            total_runs=total_runs,
-        )
-
         self.engine.set_pause_hook(self._wait_if_paused)
         try:
+            self.logger.info(
+                "supervisor",
+                "runtime",
+                "RUN_BLOCKING",
+                "START",
+                program=program.name,
+                total_runs=total_runs,
+            )
+
+            with self._lock:
+                self._last_event = "Executing startup instructions"
+
+            self.logger.info(
+                "supervisor",
+                "runtime",
+                "STARTUP_PHASE",
+                "START",
+                program=program.name,
+                instructions_path=program.startup_instructions_path,
+            )
+
+            self.engine.execute_startup(program.startup_instructions_path)
+
+            with self._lock:
+                self._last_event = "Startup instructions finished"
+
+            self.logger.info(
+                "supervisor",
+                "runtime",
+                "STARTUP_PHASE",
+                "OK",
+                program=program.name,
+                instructions_path=program.startup_instructions_path,
+            )
+
             run_idx = self._current_run_index
             effective_resume_runs = resume_runs
 
@@ -267,7 +293,7 @@ class Supervisor:
 
                 result = self.engine.execute_run(
                     ctx=ctx,
-                    instructions_path=program.instructions_path,
+                    instructions_path=program.run_instructions_path,
                     resume=effective_resume_runs,
                     clear_checkpoint_on_success=clear_run_checkpoint_on_success,
                 )

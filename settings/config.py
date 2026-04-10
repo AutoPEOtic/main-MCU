@@ -1,7 +1,7 @@
 import numpy as np
 
 # --------------- CHANGING VARIABLES --------------- #
-ime_start = 180      # 3 min
+time_start = 180      # 3 min
 time_stop = 1800      # 30 min
 time_amount = 2
 time_array = np.linspace(time_start, time_stop, time_amount)

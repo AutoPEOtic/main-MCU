@@ -6143,3 +6143,80 @@
 {"ts": 1775840373.1994128, "layer": "device_manager", "device": "all", "command": "SHUTDOWN_ALL", "result": "OK", "detail": "", "extra": {}}
 {"ts": 1775840373.1994717, "layer": "supervisor", "device": "runtime", "command": "SHUTDOWN", "result": "OK", "detail": "", "extra": {}}
 {"ts": 1775840373.199502, "layer": "app", "device": "runtime", "command": "COMMAND:shutdown", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1775846144.3420947, "layer": "app", "device": "runtime", "command": "APP_MAIN", "result": "START", "detail": "", "extra": {}}
+{"ts": 1775846144.3427942, "layer": "app", "device": "runtime", "command": "COMMAND:startup_and_run", "result": "START", "detail": "", "extra": {"resume_runs": true, "clear_run_checkpoint_on_success": false}}
+{"ts": 1775846144.34299, "layer": "supervisor", "device": "runtime", "command": "LOAD_PROGRAM", "result": "OK", "detail": "", "extra": {"program": "default_program", "total_runs": 4}}
+{"ts": 1775846144.343039, "layer": "device_manager", "device": "all", "command": "STARTUP_ALL", "result": "START", "detail": "", "extra": {}}
+{"ts": 1775846152.9728339, "layer": "device_manager", "device": "all", "command": "STARTUP_ALL", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1775846152.9729424, "layer": "supervisor", "device": "runtime", "command": "STARTUP", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1775846152.9734821, "layer": "app", "device": "runtime", "command": "COMMAND:startup_and_run", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1775846152.9735084, "layer": "supervisor", "device": "runtime", "command": "RUN_BLOCKING", "result": "START", "detail": "", "extra": {"program": "default_program", "total_runs": 4}}
+{"ts": 1775846152.9736414, "layer": "supervisor", "device": "runtime", "command": "STARTUP_PHASE", "result": "START", "detail": "", "extra": {"program": "default_program", "instructions_path": "settings/instructions_start.txt"}}
+{"ts": 1775846152.9737492, "layer": "engine", "device": "startup", "command": "EXECUTE_STARTUP", "result": "START", "detail": "", "extra": {"instructions_path": "settings/instructions_start.txt", "total_actions": 4}}
+{"ts": 1775846152.9737885, "layer": "engine", "device": "startup", "command": "PeripheralAction", "result": "START", "detail": "", "extra": {"action_index": 0, "total_actions": 4}}
+{"ts": 1775846152.9738345, "layer": "worker", "device": "peripheral", "command": "FLUSH 3", "result": "START", "detail": "", "extra": {}}
+{"ts": 1775846153.2245953, "layer": "app", "device": "runtime", "command": "COMMAND:startup_and_run", "result": "START", "detail": "", "extra": {"resume_runs": true, "clear_run_checkpoint_on_success": false}}
+{"ts": 1775846153.2246675, "layer": "app", "device": "runtime", "command": "COMMAND:startup_and_run", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1775846155.974745, "layer": "worker", "device": "peripheral", "command": "FLUSH 3", "result": "OK", "detail": "OK FLUSH 3.0", "extra": {}}
+{"ts": 1775846155.9748757, "layer": "engine", "device": "startup", "command": "PeripheralAction", "result": "OK", "detail": "", "extra": {"action_index": 0, "total_actions": 4}}
+{"ts": 1775846155.9749343, "layer": "engine", "device": "startup", "command": "PeripheralAction", "result": "START", "detail": "", "extra": {"action_index": 1, "total_actions": 4}}
+{"ts": 1775846155.9749808, "layer": "worker", "device": "peripheral", "command": "HOME ALL", "result": "START", "detail": "", "extra": {}}
+{"ts": 1775846156.8114614, "layer": "worker", "device": "peripheral", "command": "HOME ALL", "result": "ERROR", "detail": "Peripheral transport failed [HOME ALL]: ERROR: CH1 limit signal not stable during homing.", "extra": {}}
+{"ts": 1775846156.8115585, "layer": "engine", "device": "startup", "command": "PeripheralAction", "result": "ERROR", "detail": "Peripheral transport failed [HOME ALL]: ERROR: CH1 limit signal not stable during homing.", "extra": {"action_index": 1}}
+{"ts": 1775846156.8116148, "layer": "supervisor", "device": "runtime", "command": "RUN_BLOCKING", "result": "ERROR", "detail": "Startup phase failed at action 1: PeripheralAction: Peripheral transport failed [HOME ALL]: ERROR: CH1 limit signal not stable during homing.", "extra": {}}
+{"ts": 1775846167.2940755, "layer": "app", "device": "runtime", "command": "COMMAND:shutdown", "result": "START", "detail": "", "extra": {}}
+{"ts": 1775846167.2941372, "layer": "device_manager", "device": "all", "command": "SHUTDOWN_ALL", "result": "START", "detail": "", "extra": {}}
+{"ts": 1775846167.2971408, "layer": "device_manager", "device": "all", "command": "SHUTDOWN_ALL", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1775846167.2972686, "layer": "supervisor", "device": "runtime", "command": "SHUTDOWN", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1775846167.2973726, "layer": "app", "device": "runtime", "command": "COMMAND:shutdown", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1775846184.6592262, "layer": "app", "device": "runtime", "command": "APP_MAIN", "result": "START", "detail": "", "extra": {}}
+{"ts": 1775846184.6600323, "layer": "app", "device": "runtime", "command": "COMMAND:startup_and_run", "result": "START", "detail": "", "extra": {"resume_runs": true, "clear_run_checkpoint_on_success": false}}
+{"ts": 1775846184.6602676, "layer": "supervisor", "device": "runtime", "command": "LOAD_PROGRAM", "result": "OK", "detail": "", "extra": {"program": "default_program", "total_runs": 4}}
+{"ts": 1775846184.6603284, "layer": "device_manager", "device": "all", "command": "STARTUP_ALL", "result": "START", "detail": "", "extra": {}}
+{"ts": 1775846193.29092, "layer": "device_manager", "device": "all", "command": "STARTUP_ALL", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1775846193.2910666, "layer": "supervisor", "device": "runtime", "command": "STARTUP", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1775846193.2915044, "layer": "app", "device": "runtime", "command": "COMMAND:startup_and_run", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1775846193.2915463, "layer": "supervisor", "device": "runtime", "command": "RUN_BLOCKING", "result": "START", "detail": "", "extra": {"program": "default_program", "total_runs": 4}}
+{"ts": 1775846193.291727, "layer": "supervisor", "device": "runtime", "command": "STARTUP_PHASE", "result": "START", "detail": "", "extra": {"program": "default_program", "instructions_path": "settings/instructions_start.txt"}}
+{"ts": 1775846193.2921107, "layer": "engine", "device": "startup", "command": "EXECUTE_STARTUP", "result": "START", "detail": "", "extra": {"instructions_path": "settings/instructions_start.txt", "total_actions": 4}}
+{"ts": 1775846193.2923198, "layer": "engine", "device": "startup", "command": "PeripheralAction", "result": "START", "detail": "", "extra": {"action_index": 0, "total_actions": 4}}
+{"ts": 1775846193.2925177, "layer": "worker", "device": "peripheral", "command": "FLUSH 3", "result": "START", "detail": "", "extra": {}}
+{"ts": 1775846196.2937968, "layer": "worker", "device": "peripheral", "command": "FLUSH 3", "result": "OK", "detail": "OK FLUSH 3.0", "extra": {}}
+{"ts": 1775846196.2939556, "layer": "engine", "device": "startup", "command": "PeripheralAction", "result": "OK", "detail": "", "extra": {"action_index": 0, "total_actions": 4}}
+{"ts": 1775846196.2940338, "layer": "engine", "device": "startup", "command": "PeripheralAction", "result": "START", "detail": "", "extra": {"action_index": 1, "total_actions": 4}}
+{"ts": 1775846196.2940965, "layer": "worker", "device": "peripheral", "command": "HOME ALL", "result": "START", "detail": "", "extra": {}}
+{"ts": 1775846198.7873552, "layer": "worker", "device": "peripheral", "command": "HOME ALL", "result": "OK", "detail": "OK HOME ALL", "extra": {}}
+{"ts": 1775846198.7875214, "layer": "engine", "device": "startup", "command": "PeripheralAction", "result": "OK", "detail": "", "extra": {"action_index": 1, "total_actions": 4}}
+{"ts": 1775846198.7875996, "layer": "engine", "device": "startup", "command": "PeripheralAction", "result": "START", "detail": "", "extra": {"action_index": 2, "total_actions": 4}}
+{"ts": 1775846198.7876637, "layer": "worker", "device": "peripheral", "command": "DEOXIDIZE ALL", "result": "START", "detail": "", "extra": {}}
+{"ts": 1775846235.872538, "layer": "worker", "device": "peripheral", "command": "DEOXIDIZE ALL", "result": "ERROR", "detail": "Peripheral transport failed [DEOXIDIZE ALL]: device reports readiness to read but returned no data (device disconnected or multiple access on port?)", "extra": {}}
+{"ts": 1775846235.8726778, "layer": "engine", "device": "startup", "command": "PeripheralAction", "result": "ERROR", "detail": "Peripheral transport failed [DEOXIDIZE ALL]: device reports readiness to read but returned no data (device disconnected or multiple access on port?)", "extra": {"action_index": 2}}
+{"ts": 1775846235.8727407, "layer": "supervisor", "device": "runtime", "command": "RUN_BLOCKING", "result": "ERROR", "detail": "Startup phase failed at action 2: PeripheralAction: Peripheral transport failed [DEOXIDIZE ALL]: device reports readiness to read but returned no data (device disconnected or multiple access on port?)", "extra": {}}
+{"ts": 1775846306.0803845, "layer": "app", "device": "runtime", "command": "COMMAND:shutdown", "result": "START", "detail": "", "extra": {}}
+{"ts": 1775846306.0804543, "layer": "device_manager", "device": "all", "command": "SHUTDOWN_ALL", "result": "START", "detail": "", "extra": {}}
+{"ts": 1775846306.0824733, "layer": "device_manager", "device": "all", "command": "SHUTDOWN_ALL", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1775846306.0825243, "layer": "supervisor", "device": "runtime", "command": "SHUTDOWN", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1775846306.0825543, "layer": "app", "device": "runtime", "command": "COMMAND:shutdown", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1775846309.533063, "layer": "app", "device": "runtime", "command": "APP_MAIN", "result": "START", "detail": "", "extra": {}}
+{"ts": 1775846313.5504825, "layer": "app", "device": "runtime", "command": "COMMAND:startup_and_run", "result": "START", "detail": "", "extra": {"resume_runs": true, "clear_run_checkpoint_on_success": false}}
+{"ts": 1775846313.5508034, "layer": "supervisor", "device": "runtime", "command": "LOAD_PROGRAM", "result": "OK", "detail": "", "extra": {"program": "default_program", "total_runs": 4}}
+{"ts": 1775846313.5508766, "layer": "device_manager", "device": "all", "command": "STARTUP_ALL", "result": "START", "detail": "", "extra": {}}
+{"ts": 1775846322.1806529, "layer": "device_manager", "device": "all", "command": "STARTUP_ALL", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1775846322.1807911, "layer": "supervisor", "device": "runtime", "command": "STARTUP", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1775846322.1812294, "layer": "app", "device": "runtime", "command": "COMMAND:startup_and_run", "result": "OK", "detail": "", "extra": {}}
+{"ts": 1775846322.1812706, "layer": "supervisor", "device": "runtime", "command": "RUN_BLOCKING", "result": "START", "detail": "", "extra": {"program": "default_program", "total_runs": 4}}
+{"ts": 1775846322.1814375, "layer": "supervisor", "device": "runtime", "command": "STARTUP_PHASE", "result": "START", "detail": "", "extra": {"program": "default_program", "instructions_path": "settings/instructions_start.txt"}}
+{"ts": 1775846322.1815894, "layer": "engine", "device": "startup", "command": "EXECUTE_STARTUP", "result": "START", "detail": "", "extra": {"instructions_path": "settings/instructions_start.txt", "total_actions": 4}}
+{"ts": 1775846322.181673, "layer": "engine", "device": "startup", "command": "PeripheralAction", "result": "START", "detail": "", "extra": {"action_index": 0, "total_actions": 4}}
+{"ts": 1775846322.1817462, "layer": "worker", "device": "peripheral", "command": "FLUSH 3", "result": "START", "detail": "", "extra": {}}
+{"ts": 1775846325.1835823, "layer": "worker", "device": "peripheral", "command": "FLUSH 3", "result": "OK", "detail": "OK FLUSH 3.0", "extra": {}}
+{"ts": 1775846325.1837392, "layer": "engine", "device": "startup", "command": "PeripheralAction", "result": "OK", "detail": "", "extra": {"action_index": 0, "total_actions": 4}}
+{"ts": 1775846325.1838112, "layer": "engine", "device": "startup", "command": "PeripheralAction", "result": "START", "detail": "", "extra": {"action_index": 1, "total_actions": 4}}
+{"ts": 1775846325.1838725, "layer": "worker", "device": "peripheral", "command": "HOME ALL", "result": "START", "detail": "", "extra": {}}
+{"ts": 1775846328.593467, "layer": "worker", "device": "peripheral", "command": "HOME ALL", "result": "OK", "detail": "OK HOME ALL", "extra": {}}
+{"ts": 1775846328.593629, "layer": "engine", "device": "startup", "command": "PeripheralAction", "result": "OK", "detail": "", "extra": {"action_index": 1, "total_actions": 4}}
+{"ts": 1775846328.5937016, "layer": "engine", "device": "startup", "command": "PeripheralAction", "result": "START", "detail": "", "extra": {"action_index": 2, "total_actions": 4}}
+{"ts": 1775846328.593764, "layer": "worker", "device": "peripheral", "command": "DEOXIDIZE ALL", "result": "START", "detail": "", "extra": {}}
+{"ts": 1775846334.6933763, "layer": "worker", "device": "peripheral", "command": "DEOXIDIZE ALL", "result": "ERROR", "detail": "Peripheral transport failed [DEOXIDIZE ALL]: device reports readiness to read but returned no data (device disconnected or multiple access on port?)", "extra": {}}
+{"ts": 1775846334.6935747, "layer": "engine", "device": "startup", "command": "PeripheralAction", "result": "ERROR", "detail": "Peripheral transport failed [DEOXIDIZE ALL]: device reports readiness to read but returned no data (device disconnected or multiple access on port?)", "extra": {"action_index": 2}}
+{"ts": 1775846334.6936805, "layer": "supervisor", "device": "runtime", "command": "RUN_BLOCKING", "result": "ERROR", "detail": "Startup phase failed at action 2: PeripheralAction: Peripheral transport failed [DEOXIDIZE ALL]: device reports readiness to read but returned no data (device disconnected or multiple access on port?)", "extra": {}}

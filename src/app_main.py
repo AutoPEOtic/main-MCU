@@ -24,7 +24,8 @@ def build_default_program() -> ProgramDefinition:
     """
     return ProgramDefinition(
         name="default_program",
-        instructions_path="settings/instructions.txt",
+        startup_instructions_path="settings/instructions_start.txt",
+        run_instructions_path="settings/instructions_run.txt",
         Upos_values=list(legacy_config.Upos_array),
         PEO_time_values=list(legacy_config.time_array),
         KOH_targets=list(legacy_config.KOH_array),
