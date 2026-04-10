@@ -228,6 +228,70 @@ class ExperimentEngine:
                 error_text=str(exc),
             )
 
+    def execute_startup(self, instructions_path: str) -> None:
+        self.clear_stop()
+
+        actions = self.load_actions(instructions_path)
+
+        self.logger.info(
+            "engine",
+            "startup",
+            "EXECUTE_STARTUP",
+            "START",
+            instructions_path=instructions_path,
+            total_actions=len(actions),
+        )
+
+        for action_index, action in enumerate(actions):
+            if self._pause_hook is not None:
+                self._pause_hook()
+
+            self._check_stop()
+
+            action_name = self._action_name(action)
+
+            self.logger.info(
+                "engine",
+                "startup",
+                action_name,
+                "START",
+                action_index=action_index,
+                total_actions=len(actions),
+            )
+
+            result = self._execute_action_startup(action)
+
+            if result.code != ResultCode.OK:
+                self.logger.error(
+                    "engine",
+                    "startup",
+                    action_name,
+                    detail=result.detail or result.code.value,
+                    action_index=action_index,
+                )
+                raise DeviceProcessError(
+                    f"Startup phase failed at action {action_index}: {action_name}: "
+                    f"{result.detail or result.code.value}"
+                )
+
+            self.logger.info(
+                "engine",
+                "startup",
+                action_name,
+                "OK",
+                action_index=action_index,
+                total_actions=len(actions),
+            )
+
+        self.logger.info(
+            "engine",
+            "startup",
+            "EXECUTE_STARTUP",
+            "OK",
+            instructions_path=instructions_path,
+            total_actions=len(actions),
+        )
+
     def set_pause_hook(self, pause_hook: Optional[Callable[[], None]]) -> None:
         self._pause_hook = pause_hook
 
@@ -255,7 +319,7 @@ class ExperimentEngine:
 
         return bound
 
-    def _execute_action(self, ctx: RunContext, action: Action) -> CommandResult:
+    def _execute_action_without_ctx(self, action: Action) -> CommandResult:
         if isinstance(action, DelayAction):
             time.sleep(action.seconds)
             return CommandResult(
@@ -291,15 +355,18 @@ class ExperimentEngine:
                 timeout_s=action.timeout_s,
             )
 
+        if isinstance(action, SpectrumAcquireAction):
+            return self.device_manager.acquire_spectrum()
+
+        raise ValidationError(f"Action requires run context: {type(action).__name__}")
+
+    def _execute_action(self, ctx: RunContext, action: Action) -> CommandResult:
         if isinstance(action, SolutionAction):
             return self.device_manager.send_solution(
                 total_ml=action.total_ml,
                 channels=action.channels,
                 timeout_s=action.timeout_s,
             )
-
-        if isinstance(action, SpectrumAcquireAction):
-            return self.device_manager.acquire_spectrum()
 
         if isinstance(action, PEOSendValuesAction):
             return self.device_manager.peo_send_values(ctx.Upos)
@@ -310,8 +377,7 @@ class ExperimentEngine:
         if isinstance(action, PEOOffAction):
             return self.device_manager.peo_off()
 
-        raise ValidationError(f"Unsupported action type: {type(action).__name__}")
-
+        return self._execute_action_without_ctx(action)
     @staticmethod
     def _action_name(action: Action) -> str:
         return type(action).__name__
@@ -342,3 +408,18 @@ class ExperimentEngine:
             return False
 
         return False
+    def _execute_action_startup(self, action: Action) -> CommandResult:
+        if isinstance(action, SolutionAction):
+            raise ValidationError("SOLUTION is not allowed in startup instructions")
+
+        if isinstance(action, PEOSendValuesAction):
+            raise ValidationError("SEND PEO VALUES is not allowed in startup instructions")
+
+        if isinstance(action, PEOOnAction):
+            raise ValidationError("PEO ON is not allowed in startup instructions")
+
+        if isinstance(action, PEOOffAction):
+            raise ValidationError("PEO OFF is not allowed in startup instructions")
+
+        # all remaining actions are safe to execute without run context
+        return self._execute_action_without_ctx(action)

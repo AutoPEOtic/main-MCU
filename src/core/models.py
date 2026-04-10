@@ -35,7 +35,8 @@ class DeviceTrust(str, Enum):
 @dataclass(frozen=True)
 class ProgramDefinition:
     name: str
-    instructions_path: str
+    startup_instructions_path: str
+    run_instructions_path: str
     Upos_values: List[float]
     PEO_time_values: List[float]
     KOH_targets: List[float]
