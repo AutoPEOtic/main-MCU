@@ -4,7 +4,7 @@ import time
 from dataclasses import dataclass
 from typing import Callable, List, Optional
 
-from src.core.errors import DeviceProcessError, StopRequested, ValidationError
+from src.core.errors import StopRequested, ValidationError
 from src.core.logging_utils import EventLogger
 from src.core.models import CommandResult, ResultCode, RunContext
 from src.devices.device_manager import DeviceManager
@@ -36,6 +36,13 @@ class EngineRunResult:
     last_result: Optional[CommandResult] = None
     error_text: str = ""
 
+@dataclass
+class EngineStartupResult:
+    ok: bool
+    completed_actions: int
+    total_actions: int
+    last_result: Optional[CommandResult] = None
+    error_text: str = ""
 
 class ExperimentEngine:
     """
@@ -228,10 +235,11 @@ class ExperimentEngine:
                 error_text=str(exc),
             )
 
-    def execute_startup(self, instructions_path: str) -> None:
+    def execute_startup(self, instructions_path: str) -> EngineStartupResult:
         self.clear_stop()
 
         actions = self.load_actions(instructions_path)
+        last_result: Optional[CommandResult] = None
 
         self.logger.info(
             "engine",
@@ -242,55 +250,83 @@ class ExperimentEngine:
             total_actions=len(actions),
         )
 
-        for action_index, action in enumerate(actions):
-            if self._pause_hook is not None:
-                self._pause_hook()
+        try:
+            for action_index, action in enumerate(actions):
+                if self._pause_hook is not None:
+                    self._pause_hook()
 
-            self._check_stop()
+                self._check_stop()
 
-            action_name = self._action_name(action)
+                action_name = self._action_name(action)
 
-            self.logger.info(
-                "engine",
-                "startup",
-                action_name,
-                "START",
-                action_index=action_index,
-                total_actions=len(actions),
-            )
-
-            result = self._execute_action_startup(action)
-
-            if result.code != ResultCode.OK:
-                self.logger.error(
+                self.logger.info(
                     "engine",
                     "startup",
                     action_name,
-                    detail=result.detail or result.code.value,
+                    "START",
                     action_index=action_index,
+                    total_actions=len(actions),
                 )
-                raise DeviceProcessError(
-                    f"Startup phase failed at action {action_index}: {action_name}: "
-                    f"{result.detail or result.code.value}"
+
+                result = self._execute_action_startup(action)
+                last_result = result
+
+                if result.code != ResultCode.OK:
+                    self.logger.error(
+                        "engine",
+                        "startup",
+                        action_name,
+                        detail=result.detail or result.code.value,
+                        action_index=action_index,
+                    )
+                    return EngineStartupResult(
+                        ok=False,
+                        completed_actions=action_index,
+                        total_actions=len(actions),
+                        last_result=result,
+                        error_text=result.detail or result.code.value,
+                    )
+
+                self.logger.info(
+                    "engine",
+                    "startup",
+                    action_name,
+                    "OK",
+                    action_index=action_index,
+                    total_actions=len(actions),
                 )
 
             self.logger.info(
                 "engine",
                 "startup",
-                action_name,
+                "EXECUTE_STARTUP",
                 "OK",
-                action_index=action_index,
+                instructions_path=instructions_path,
                 total_actions=len(actions),
             )
 
-        self.logger.info(
-            "engine",
-            "startup",
-            "EXECUTE_STARTUP",
-            "OK",
-            instructions_path=instructions_path,
-            total_actions=len(actions),
-        )
+            return EngineStartupResult(
+                ok=True,
+                completed_actions=len(actions),
+                total_actions=len(actions),
+                last_result=last_result,
+                error_text="",
+            )
+
+        except StopRequested as exc:
+            self.logger.error(
+                "engine",
+                "startup",
+                "STOP",
+                detail=str(exc),
+            )
+            return EngineStartupResult(
+                ok=False,
+                completed_actions=0,
+                total_actions=len(actions),
+                last_result=last_result,
+                error_text=str(exc),
+            )
 
     def set_pause_hook(self, pause_hook: Optional[Callable[[], None]]) -> None:
         self._pause_hook = pause_hook
