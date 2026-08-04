@@ -26,6 +26,7 @@ _PERIPHERAL_TIMEOUTS = {
     "SOLUTION": 120.0,
     "FLUSH": 120.0,
     "CUT": 30.0,
+    "DISK": 10.0,
 }
 
 _MOTION_RE = re.compile(r"^(G0|G1|G2|G3)\b", re.IGNORECASE)
@@ -81,6 +82,27 @@ def parse_instruction_line(line: str) -> Action | None:
     if u == "SOLUTION":
         # actual channels are injected from run context later
         return SolutionAction(total_ml=-1.0, channels={})
+
+    if u == "DISK STATUS" or u == "DISK POSITION NEXT":
+        return PeripheralAction(command=u, timeout_s=peripheral_timeout(u))
+
+    if u.startswith("DISK POSITION "):
+        parts = u.split()
+        if len(parts) != 3:
+            raise ValidationError(f"Invalid DISK syntax: '{line.strip()}'")
+        try:
+            position = int(parts[2])
+        except ValueError as exc:
+            raise ValidationError(f"Invalid DISK position: '{line.strip()}'") from exc
+        if str(position) != parts[2] or not 0 <= position <= 15:
+            raise ValidationError(f"DISK position must be 0..15: '{line.strip()}'")
+        return PeripheralAction(
+            command=f"DISK POSITION {position}",
+            timeout_s=peripheral_timeout(u),
+        )
+
+    if u.startswith("DISK"):
+        raise ValidationError(f"Invalid DISK syntax: '{line.strip()}'")
 
     # PAUSE <value>
     if u.startswith("PAUSE"):

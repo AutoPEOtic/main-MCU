@@ -1,0 +1,115 @@
+G21             ; включить миллиметры (единицы измерения — мм)
+PAUSE 001       ; задержка 1 мс (похоже, это твоя кастомная команда, GRBL её сам не понимает)
+G90             ; абсолютное позиционирование (координаты задаются относительно нуля)
+PAUSE 001
+F2000           ; задать скорость перемещения (feedrate = 2000 мм/мин)
+PAUSE 001
+
+PEO OFF
+PAUSE 010
+
+HOME           ; сделать homing по всем осям
+PAUSE 050      ; небольшая пауза, чтобы GRBL успел отработать
+
+SYR HOME ALL
+
+G10 P0 L20 X0   ; установить текущую координату X = 0 для системы координат P0
+PAUSE 001
+G10 P0 L20 Y0   ; установить текущую координату Y = 0
+PAUSE 001
+
+#Move head below extruder
+G1 X-24.432 Y1  ; линейное перемещение в точку X=-24.432, Y=1 (по горизонтали и вертикали)
+PAUSE 050
+
+#Turn on solenoid
+SOLENOID 070
+
+MOTOR 100
+PAUSE 080
+
+#Extrude 10cm wire
+G91
+G1 Z40
+PAUSE 080
+G90
+
+PAUSE 080
+#Cut the wire
+WIRE CUT
+PAUSE 170
+
+#Move head above chamber entry
+G1 X-20
+PAUSE 020
+
+#Immerse the wire
+G1 Y38
+PAUSE 050
+
+#Pump the solution
+PUMP SOLUTION
+
+#Send PEO values
+SEND PEO VALUES
+PAUSE 050
+
+#Turn on PEO
+PEO ON
+
+#Wait for electrolysis
+#PAUSE 150
+
+#Turn off PEO
+PEO OFF
+PAUSE 050
+
+#Reconnect all ports
+RECONNECT
+PAUSE 010
+
+G21
+PAUSE 001
+G90
+PAUSE 001
+F2000
+PAUSE 001
+G10 P0 L20 X-20
+PAUSE 001
+G10 P0 L20 Y38
+PAUSE 001
+
+#Flush the chamber
+PUMP3 100
+PAUSE 100
+
+#Raise head to maximum
+G1 Y1
+PAUSE 050
+
+#Move head above the fan
+#G1 X-18 Y329
+#PAUSE 300
+
+#Turn on the fan
+#FAN 050
+#PAUSE 050
+
+#Raise back the sample
+#G1 Y130
+#PAUSE 200
+
+#Move head above spectrometer
+G1 X0
+PAUSE 050
+
+#Lower sample into the spectrometer
+G1 Y40
+PAUSE 060
+
+#Capture the spectrum; automatically sends to the database
+SPECTRUM GET
+
+#Move to origin
+G1 X0 Y0
+PAUSE 050

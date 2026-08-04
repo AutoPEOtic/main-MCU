@@ -69,6 +69,7 @@ class CheckpointStore:
                 "total_ml": ctx.total_ml,
                 "mix_channels": ctx.mix_channels,
                 "mix_labels": ctx.mix_labels,
+                "required_disk_position": ctx.required_disk_position,
             },
             updated_at=time.time(),
         )
@@ -157,6 +158,7 @@ class CheckpointStore:
                 "total_ml": ctx.total_ml,
                 "mix_channels": ctx.mix_channels,
                 "mix_labels": ctx.mix_labels,
+                "required_disk_position": ctx.required_disk_position,
             },
             updated_at=time.time(),
         )

@@ -16,6 +16,7 @@ class CompiledRun:
     total_ml: float
     mix_channels: Dict[str, float]
     mix_labels: Dict[str, float]
+    required_disk_position: int
 
 
 def compute_two_channel_recipe(program: ProgramDefinition, target: float) -> Tuple[Dict[str, float], Dict[str, float]]:
@@ -57,6 +58,7 @@ def build_run_plan(program: ProgramDefinition) -> List[CompiledRun]:
                         total_ml=program.total_ml,
                         mix_channels=channels,
                         mix_labels=labels,
+                        required_disk_position=(i - 1) % 16,
                     )
                 )
     return runs
@@ -73,4 +75,5 @@ def as_run_context(program: ProgramDefinition, run: CompiledRun, total_runs: int
         total_ml=run.total_ml,
         mix_channels=run.mix_channels,
         mix_labels=run.mix_labels,
+        required_disk_position=run.required_disk_position,
     )

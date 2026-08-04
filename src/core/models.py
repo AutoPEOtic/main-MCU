@@ -58,6 +58,7 @@ class RunContext:
     total_ml: float
     mix_channels: Dict[str, float]
     mix_labels: Dict[str, float]
+    required_disk_position: int
 
 
 @dataclass

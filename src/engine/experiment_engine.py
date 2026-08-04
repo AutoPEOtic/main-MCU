@@ -350,6 +350,19 @@ class ExperimentEngine:
             elif isinstance(action, PEOOnAction):
                 duration_s = ctx.PEO_time if action.duration_s < 0 else action.duration_s
                 bound.append(PEOOnAction(duration_s=duration_s))
+            elif (
+                isinstance(action, PeripheralAction)
+                and action.command.upper() == "DISK POSITION NEXT"
+            ):
+                # Resolve state-dependent NEXT before it reaches the transport.
+                # Any retry after an uncertain outcome therefore remains absolute
+                # and idempotent for this run.
+                bound.append(
+                    PeripheralAction(
+                        command=f"DISK POSITION {ctx.required_disk_position}",
+                        timeout_s=action.timeout_s,
+                    )
+                )
             else:
                 bound.append(action)
 
@@ -414,6 +427,7 @@ class ExperimentEngine:
             return self.device_manager.peo_off()
 
         return self._execute_action_without_ctx(action)
+
     @staticmethod
     def _action_name(action: Action) -> str:
         return type(action).__name__
@@ -432,7 +446,7 @@ class ExperimentEngine:
 
         if isinstance(action, PeripheralAction):
             upper = action.command.upper()
-            if upper.startswith(("HOME ALL", "CUT", "FLUSH", "DEOXIDIZE")):
+            if upper.startswith(("HOME ALL", "CUT", "FLUSH", "DEOXIDIZE", "DISK POSITION")):
                 return True
             return False
 
@@ -444,6 +458,7 @@ class ExperimentEngine:
             return False
 
         return False
+
     def _execute_action_startup(self, action: Action) -> CommandResult:
         if isinstance(action, SolutionAction):
             raise ValidationError("SOLUTION is not allowed in startup instructions")

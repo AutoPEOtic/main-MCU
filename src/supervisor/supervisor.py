@@ -13,7 +13,7 @@ from src.engine.experiment_engine import EngineRunResult, ExperimentEngine
 from src.engine.run_plan import as_run_context, build_run_plan
 from src.supervisor.state_machine import StateMachine, SupervisorState
 from src.core.recovery_policy import FailureClass, RecoveryAction, RecoveryDecision
-from src.core.models import DeviceName
+from src.core.models import DeviceName, ResultCode
 
 
 class Supervisor:
@@ -266,6 +266,15 @@ class Supervisor:
 
             while run_idx < total_runs:
                 with self._lock:
+                    reinitialize_program = self._force_fresh_start
+                    self._force_fresh_start = False
+
+                if reinitialize_program:
+                    # A full-program restart repeats the startup phase, including
+                    # the required absolute disk initialization at position zero.
+                    self.engine.execute_startup(program.startup_instructions_path)
+
+                with self._lock:
                     self._current_run_index = run_idx
 
                 self._wait_if_paused()
@@ -321,7 +330,7 @@ class Supervisor:
                             self._current_run_index = 0
                             self._run_retry_counts = {}
                             effective_resume_runs = False
-                            self._force_fresh_start = False
+                            self._force_fresh_start = True
                             self._last_event = (
                                 f"Restarting full program from zero "
                                 f"(cleared {deleted} checkpoint files)"
@@ -355,7 +364,7 @@ class Supervisor:
                         self._run_retry_counts = {}
                         self._last_error = ""
                         effective_resume_runs = False
-                        self._force_fresh_start = False
+                        self._force_fresh_start = True
                         self._last_event = (
                             f"Restarting full program after failure from zero "
                             f"(cleared {deleted} checkpoint files)"
@@ -418,6 +427,14 @@ class Supervisor:
                         self.device_manager.send_peripheral_text("STATUS", timeout_s=5.0)
                         if decision.require_peripheral_home_all:
                             self.device_manager.send_peripheral_text("HOME ALL", timeout_s=180.0)
+
+                    failed_command = (
+                        result.last_result.command.upper()
+                        if result.last_result is not None
+                        else ""
+                    )
+                    if failed_command.startswith("DISK POSITION"):
+                        self._recover_disk_absolute(ctx)
 
                     if decision.reconnect_peo:
                         self.device_manager.reconnect_device(DeviceName.PEO)
@@ -498,6 +515,7 @@ class Supervisor:
                             self._run_retry_counts = {}
                             run_idx = 0
                             self._current_run_index = 0
+                            self._force_fresh_start = True
                             continue
 
                         self._last_error = decision.detail or (result.error_text or "Run failed")
@@ -668,6 +686,15 @@ class Supervisor:
     def _clear_run_retry(self, run_index: int) -> None:
         self._run_retry_counts.pop(run_index, None)
 
+    def _recover_disk_absolute(self, ctx: RunContext) -> None:
+        """Re-establish disk state using only the run's idempotent target."""
+        disk_result = self.device_manager.send_peripheral_text(
+            f"DISK POSITION {ctx.required_disk_position}",
+            timeout_s=10.0,
+        )
+        if disk_result.code != ResultCode.OK:
+            raise RuntimeError(disk_result.detail or "disk recovery failed")
+
     def _decide_recovery(self, result) -> RecoveryDecision:
         last = result.last_result
         if last is None:
@@ -743,6 +770,7 @@ class Supervisor:
                 or cmd.startswith("SOLENOID")
                 or cmd.startswith("FAN")
                 or cmd.startswith("CH")
+                or cmd.startswith("DISK")
             ):
                 return RecoveryDecision(
                     failure_class=FailureClass.PROTOCOL,
@@ -800,6 +828,7 @@ class Supervisor:
                 or cmd.startswith("SOLENOID")
                 or cmd.startswith("FAN")
                 or cmd.startswith("CH")
+                or cmd.startswith("DISK")
             ):
                 return RecoveryDecision(
                     failure_class=FailureClass.TRANSPORT,
