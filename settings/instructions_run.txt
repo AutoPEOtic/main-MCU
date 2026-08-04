@@ -1,6 +1,8 @@
 $X
 PAUSE 010
-
+FLUSH 3
+PAUSE 010
+SOLENOID OFF
 G90      
 G21
 G94
@@ -14,22 +16,22 @@ G91
 F1000           
 #Move head below extruder
 G1 Y55
-G1 X-295
+#G1 X-295
 
 #CHECKPOINT BELOW_EXTRUDER
 G90
 
 #Extrude wire
-SOLENOID ON
+#SOLENOID ON
 PAUSE 010
 G91
-G1 Z35
+#G1 Z35
 
-SOLENOID OFF
+#SOLENOID OFF
 PAUSE 010
 
 #Cut the wire
-CUT
+#CUT
 
 #CHECKPOINT WIRE_CUT_DONE
 
@@ -41,7 +43,7 @@ G94
 G54 
 
 #Move head above chamber entry
-G1 X-230
+#G1 X-230
 G1 Y75
 G1 X-120
 
@@ -88,19 +90,19 @@ G91
 G1 Y55 F1000
 
 #CHECKPOINT OUT_OF_CHAMBER
-G90            
-G21               
-G94
-G54 
-F1000
-PAUSE 010
+#G90            
+#G21               
+#G94
+#54 
+#F1000
+#PAUSE 010
 
-HOME
+#HOME
 #CHECKPOINT SECOND_HOME
 
 #Capture the spectrum; automatically sends to the database
-SPECTRUM GET
+#SPECTRUM GET
 #CHECKPOINT SPEKTRUM_GOT
 
-PAUSE 050
+#PAUSE 050
 #CHECKPOINT DONE

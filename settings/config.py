@@ -1,19 +1,19 @@
 import numpy as np
 
 # --------------- CHANGING VARIABLES --------------- #
-time_start = 180      # 3 min
-time_stop = 1800      # 30 min
-time_amount = 2
+time_start = 30      # 3 min
+time_stop = 30      # 30 min
+time_amount = 1
 time_array = np.linspace(time_start, time_stop, time_amount)
 
-Upos_start = 700
-Upos_stop = 700
+Upos_start = 600
+Upos_stop = 600
 Upos_amount = 1
 Upos_array = np.linspace(Upos_start, Upos_stop, Upos_amount)
 
-KOH_start = 0.1
-KOH_stop = 1
-KOH_amount = 2
+KOH_start = 0.8
+KOH_stop = 0.8
+KOH_amount = 1
 KOH_array = np.linspace(KOH_start, KOH_stop, KOH_amount)
 
 #[peripheral pico]
@@ -37,10 +37,10 @@ PEO_baudrate = 19200
 PEO_parity = "E"
 PEO_stopbits = 1
 PEO_bytesize = 8
-PEO_Upos = 700
-PEO_Ipos = 10
-PEO_Uneg = 0
-PEO_Ineg = 0
+PEO_Upos = 500
+PEO_Ipos = 100
+PEO_Uneg = 100
+PEO_Ineg = 10
 PEO_Pulsepos = 9999
 PEO_Pause1 = 20
 PEO_Pulseneg = 0

@@ -1,24 +1,24 @@
 {
   "program_name": "default_program",
   "run_index": 1,
-  "total_runs": 9,
-  "action_index": 1,
-  "total_actions": 55,
-  "action_name": "PeripheralAction",
-  "status": "FAILED: Peripheral transport failed [HOME ALL]: 'NoneType' object cannot be interpreted as an integer",
+  "total_runs": 1,
+  "action_index": 34,
+  "total_actions": 44,
+  "action_name": "PEOOffAction",
+  "status": "SUCCESS",
   "params": {
-    "Upos": 500.0,
+    "Upos": 600.0,
     "PEO_time": 30.0,
-    "KOH_target": 0.1,
-    "total_ml": 30.0,
+    "KOH_target": 0.8,
+    "total_ml": 20.0,
     "mix_channels": {
-      "CH1": 0.9,
-      "CH2": 0.1
+      "CH1": 0.2,
+      "CH2": 0.8
     },
     "mix_labels": {
-      "H2O": 0.9,
-      "KOH_stock": 0.1
+      "H2O": 0.2,
+      "KOH_stock": 0.8
     }
   },
-  "updated_at": 1775840373.1964161
+  "updated_at": 1779453180.7834334
 }
